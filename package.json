@@ -1,0 +1,47 @@
+{
+  "name": "@yogh/hw-app-starknet",
+  "version": "1.0.0",
+  "description": "Ledger Hardware Wallet Starknet Application API",
+  "keywords": [
+    "Ledger",
+    "LedgerWallet",
+    "Starknet"
+  ],
+  "homepage": "https://github.com/yogh333/hw-app-starknet",
+  "license": "Apache-2.0",
+  "main": "lib/Stark.js",
+  "module": "lib-es/Stark.js",
+  "types": "lib/Stark.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:yogh333/hw-app-starknet.git"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "bugs": {
+    "url": "https://github.com/yogh333/hw-app-starknet/issues"
+  },
+  "dependencies": {
+    "@ledgerhq/hw-transport": "^6.27.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.18.0",
+    "@babel/preset-env": "^7.18.0",
+    "@babel/preset-typescript": "^7.17.12",
+    "@ledgerhq/hw-transport-node-hid": "^6.27.1",
+    "@types/jest": "^27.5.1",
+    "babel-jest": "^28.1.0",
+    "documentation": "^13.2.5",
+    "jest": "^28.1.0",
+    "prettier": "^2.6.2",
+    "starknet": "^3.11.0",
+    "ts-jest": "^28.0.3",
+    "ts-node": "^10.8.0",
+    "typescript": "^4.6.4"
+  }
+}
