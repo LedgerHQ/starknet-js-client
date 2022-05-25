@@ -7,8 +7,6 @@ export function serializePath(path: string): Uint8Array {
 
   const pathArray = path.split("/");
 
-  console.log(pathArray);
-
   /*if (pathArray.length !== 5) {
     throw new Error("Invalid path. (e.g \"m/44'/5757'/5'/0/3\")");
   }*/
