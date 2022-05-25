@@ -1,6 +1,6 @@
 {
   "name": "@yogh/hw-app-starknet",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Ledger Hardware Wallet Starknet Application API",
   "keywords": [
     "Ledger",
@@ -21,7 +21,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "doc": "documentation readme src/** --section=API --pe ts --re ts --re d.ts"
   },
   "bugs": {
     "url": "https://github.com/yogh333/hw-app-starknet/issues"

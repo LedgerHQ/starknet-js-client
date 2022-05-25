@@ -1,10 +1,10 @@
-# `@ledgerhq/hw-app-starknet`
+# `@yogh/hw-app-starknet`
 
 > TODO: description
 
 ## Usage
 
-    const hwAppStarknet = require('@ledgerhq/hw-app-starknet');
+    const hwAppStarknet = require('@yogh/hw-app-starknet');
 
     // TODO: DEMONSTRATE API
 
@@ -40,7 +40,7 @@ Starknet API
 #### Examples
 
 ```javascript
-import Stark from "@ledgerhq/hw-app-starknet";
+import Stark from "@yogh/hw-app-starknet";
 const stark = new Stark(transport)
 ```
 

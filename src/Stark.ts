@@ -81,7 +81,7 @@ function hexToBytes(hex: string) {
  * Starknet API
  *
  * @example
- * import Stark from "@ledgerhq/hw-app-starknet";
+ * import Stark from "@yogh/hw-app-starknet";
  * const stark = new Stark(transport)
  */
 export default class Stark {
