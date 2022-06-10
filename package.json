@@ -1,5 +1,5 @@
 {
-  "name": "@yogh/hw-app-starknet",
+  "name": "@ledgerhq/hw-app-starknet",
   "version": "1.0.1",
   "description": "Ledger Hardware Wallet Starknet Application API",
   "keywords": [
