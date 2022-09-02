@@ -10,7 +10,7 @@
   "homepage": "https://github.com/yogh333/hw-app-starknet",
   "license": "Apache-2.0",
   "main": "lib/Stark.js",
-  "module": "lib-es/Stark.js",
+  "module": "lib/Stark.js",
   "types": "lib/Stark.d.ts",
   "publishConfig": {
     "access": "public"
