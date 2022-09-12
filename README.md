@@ -1,10 +1,10 @@
-# `@yogh/hw-app-starknet`
+# HW-APP-STARKNET
 
-> TODO: description
+Typescript host client used to interact with Starknet Nano application
 
 ## Usage
 
-    const hwAppStarknet = require('@yogh/hw-app-starknet');
+    const starknetClient = require('@ledgerhq/hw-app-starknet');
 
     // TODO: DEMONSTRATE API
 
@@ -17,15 +17,16 @@
 *   [Stark](#stark)
     *   [Parameters](#parameters)
     *   [Examples](#examples)
-    *   [getAppVersion](#getversion)
+    *   [getAppVersion](#getappversion)
     *   [getAppInfo](#getappinfo)
     *   [getPubKey](#getpubkey)
         *   [Parameters](#parameters-1)
+        *   [Examples](#examples-1)
     *   [showPubKey](#showpubkey)
         *   [Parameters](#parameters-2)
-        *   [Examples](#examples-1)
-    *   [signFelt](#signfelt)
-        *   [Parameters](#parameters-4)
+        *   [Examples](#examples-2)
+    *   [sign](#sign)
+        *   [Parameters](#parameters-3)
 
 ### Stark
 
@@ -38,7 +39,7 @@ Starknet API
 #### Examples
 
 ```javascript
-import Stark from "@yogh/hw-app-starknet";
+import Stark from "@ledgerhq/hw-app-starknet";
 const stark = new Stark(transport)
 ```
 
@@ -52,25 +53,27 @@ Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 get information about Nano Starknet application
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAppInfo>** an object with appName, appVersion
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAppInfo>** an object with appName
 
 #### getPubKey
 
-get Starknet public key derived from provided derivation path (shall start with m/2645')
+get Starknet public key derived from provided derivation path
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format (<https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md>)
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey
+##### Examples
 
 ```javascript
-start.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
+stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 ```
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
 
 #### showPubKey
 
-get and show Starknet public key derived from provided derivation path (shall start with m/2645')
+get and show Starknet public key derived from provided derivation path
 
 ##### Parameters
 
@@ -82,8 +85,7 @@ get and show Starknet public key derived from provided derivation path (shall st
 stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 ```
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey
-
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
 
 #### sign
 
@@ -91,9 +93,8 @@ sign the given hash over the Starknet elliptic curve
 
 ##### Parameters
 
-*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format
-*   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
 *   `show`   (optional, default `true`)
-*   `message`  hexadecimal hash to sign
 
-Returns **any** an object with (r, s, v) signature
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature

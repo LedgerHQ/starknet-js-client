@@ -1,5 +1,5 @@
 /********************************************************************************
- * (c) 2022 Ledger
+ *  (c) 2022 Ledger
  *  (c) 2019-2020 Zondax GmbH
  *  (c) 2016-2017 Ledger
  *
@@ -18,7 +18,7 @@
 import Transport from "@ledgerhq/hw-transport";
 import { serializePath } from "./helper";
 import {
-  ResponseAddress,
+  ResponsePublicKey,
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
@@ -35,17 +35,18 @@ import {
   PAYLOAD_TYPE,
   processErrorResponse,
 } from "./common";
+import { numberLiteralTypeAnnotation } from "@babel/types";
 
 export { LedgerError };
 export * from "./types";
 
-function processGetAddrResponse(response: Uint8Array) {
+function processGetPubkeyResponse(response: Uint8Array) {
   let partialResponse = response;
 
   const errorCodeData = partialResponse.subarray(-2);
   const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
-  //get public key len (variable)
+  //get public key len (64)
   const PKLEN = partialResponse[0];
   const publicKey = partialResponse.slice(1, 1 + PKLEN);
 
@@ -81,7 +82,7 @@ function hexToBytes(hex: string) {
  * Starknet API
  *
  * @example
- * import Stark from "@yogh/hw-app-starknet";
+ * import Stark from "@ledgerhq/hw-app-starknet";
  * const stark = new Stark(transport)
  */
 export default class Stark {
@@ -139,10 +140,10 @@ export default class Stark {
 
       const result: { errorMessage?: string; returnCode?: LedgerError } = {};
 
-      let appName = "err";
+      let appName = "undefined";
 
-      const appNameLen = response[1];
-      appName = response.subarray(2, 2 + appNameLen).toString("ascii");
+      const appNameLen = response[0];
+      appName = response.subarray(1, 1 + appNameLen).toString("ascii");
       
       return {
         returnCode,
@@ -156,16 +157,16 @@ export default class Stark {
    * get Starknet public key derived from provided derivation path
    * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
    * @return an object with publicKey
-   *  * @example
+   * @example
    * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async getPubKey(path: string): Promise<ResponseAddress> {
+  async getPubKey(path: string): Promise<ResponsePublicKey> {
     const serializedPath = Buffer.from(serializePath(path));
     return this.transport
       .send(CLA, INS.GET_PUB_KEY, P1_VALUES.ONLY_RETRIEVE, 0, serializedPath, [
         LedgerError.NoErrors,
       ])
-      .then(processGetAddrResponse, processErrorResponse);
+      .then(processGetPubkeyResponse, processErrorResponse);
   }
 
   /**
@@ -175,7 +176,7 @@ export default class Stark {
    * @example
    * stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async showPubKey(path: string): Promise<ResponseAddress> {
+  async showPubKey(path: string): Promise<ResponsePublicKey> {
     const serializedPath = Buffer.from(serializePath(path));
     return this.transport
       .send(
@@ -186,7 +187,7 @@ export default class Stark {
         serializedPath,
         [LedgerError.NoErrors]
       )
-      .then(processGetAddrResponse, processErrorResponse);
+      .then(processGetPubkeyResponse, processErrorResponse);
   }
 
   async signSendChunk(
@@ -245,11 +246,11 @@ export default class Stark {
 
   /**
    * sign the given hash over the Starknet elliptic curve
-   * @param path a path in EIP-2645 format
-   * @param message hexadecimal hash to sign
+   * @param path Derivation path in EIP-2645 format
+   * @param hash Pedersen hash to be signed
    * @return an object with (r, s, v) signature
    */
-  async sign(path: string, hash: string, show = true) {
+  async sign(path: string, hash: string, show = true): Promise<ResponseSign> {
     
     const felt = hexToBytes(fixHash(hash));
 
@@ -261,13 +262,19 @@ export default class Stark {
         INS.SIGN,
         show ? 1 : 0
       ).then(async (response) => {
-        let result = {
-          returnCode: response.returnCode,
-          errorMessage: response.errorMessage,
-          r: null as null | Uint8Array,
-          s: null as null | Uint8Array,
-          v: null as null | number,
+
+        if (response.returnCode !== LedgerError.NoErrors) {
+          return response;
+        }
+
+        let result: ResponseSign = {
+          returnCode: LedgerError.ExecutionError,
+          errorMessage: "Execution Error",
+          r: new Uint8Array(0),
+          s: new Uint8Array(0),
+          v: 0
         };
+
         for (let i = 1; i < chunks.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
           result = await this.signSendChunk(
