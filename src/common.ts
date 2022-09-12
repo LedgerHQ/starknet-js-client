@@ -1,16 +1,15 @@
 import Transport from "@ledgerhq/hw-transport";
 
-export const CLA = 0xff;
+export const CLA = 0x5A;
 export const CHUNK_SIZE = 250;
-export const APP_KEY = "ETH";
 
 export const HASH_MAX_LENGTH = 63;
 
 export const INS = {
   GET_VERSION: 0x00,
-  GET_ADDR: 0x01,
-  SIGN: 0x02,
-  SIGN_FELT: 0x20,
+  GET_APP_NAME: 0x01,
+  GET_ADDR: 0x02,
+  SIGN: 0x03,
 };
 
 export const PAYLOAD_TYPE = {
@@ -123,26 +122,12 @@ export async function getVersion(transport: Transport) {
     const returnCode = (errorCodeData[0] * 256 +
       errorCodeData[1]) as LedgerError;
 
-    let targetId = 0;
-    if (response.length >= 9) {
-      /* eslint-disable no-bitwise */
-      targetId =
-        (response[5] << 24) +
-        (response[6] << 16) +
-        (response[7] << 8) +
-        (response[8] << 0);
-      /* eslint-enable no-bitwise */
-    }
-
     return {
       returnCode,
       errorMessage: errorCodeToString(returnCode),
-      testMode: response[0] !== 0,
-      major: response[1],
-      minor: response[2],
-      patch: response[3],
-      deviceLocked: response[4] === 1,
-      targetId: targetId.toString(16),
+      major: response[0],
+      minor: response[1],
+      patch: response[2]
     };
   }, processErrorResponse);
 }
