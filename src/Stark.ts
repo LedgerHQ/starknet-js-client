@@ -162,7 +162,7 @@ export default class Stark {
   async getPubKey(path: string): Promise<ResponseAddress> {
     const serializedPath = Buffer.from(serializePath(path));
     return this.transport
-      .send(CLA, INS.GET_ADDR, P1_VALUES.ONLY_RETRIEVE, 0, serializedPath, [
+      .send(CLA, INS.GET_PUB_KEY, P1_VALUES.ONLY_RETRIEVE, 0, serializedPath, [
         LedgerError.NoErrors,
       ])
       .then(processGetAddrResponse, processErrorResponse);
@@ -180,7 +180,7 @@ export default class Stark {
     return this.transport
       .send(
         CLA,
-        INS.GET_ADDR,
+        INS.GET_PUB_KEY,
         P1_VALUES.SHOW_ADDRESS_IN_DEVICE,
         0,
         serializedPath,

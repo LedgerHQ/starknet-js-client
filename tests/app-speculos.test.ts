@@ -35,10 +35,10 @@ afterAll(async () => {
 })
 
 test('getAppVersion()', async () => {
-  const version = await app.getVersion()
-  expect(version.major).toBe(0)
+  const version = await app.getAppVersion()
+  expect(version.major).toBe(1)
   expect(version.minor).toBe(0)
-  expect(version.patch).toBe(6)
+  expect(version.patch).toBe(0)
 })
 
 test('getPubKey()', async () => {
@@ -51,7 +51,7 @@ test('getPubKey()', async () => {
 })
 
 test('signFelt(63 digits)', async () => {
-  const result = await app.signFelt(PATH, HASH_63, false);
+  const result = await app.sign(PATH, HASH_63, false);
   expect(result.returnCode).toBe(LedgerError.NoErrors)
   const r = new BN(result.r);
   const s = new BN(result.s);
@@ -61,7 +61,7 @@ test('signFelt(63 digits)', async () => {
 })
 
 test('signFelt(62 digits)', async () => {
-  const result = await app.signFelt(PATH, HASH_62, false);
+  const result = await app.sign(PATH, HASH_62, false);
   expect(result.returnCode).toBe(LedgerError.NoErrors)
   const r = new BN(result.r);
   const s = new BN(result.s);  
@@ -71,7 +71,7 @@ test('signFelt(62 digits)', async () => {
 })
 
 test('signFelt(61 digits)', async () => {
-  const result = await app.signFelt(PATH, HASH_61, false);
+  const result = await app.sign(PATH, HASH_61, false);
   expect(result.returnCode).toBe(LedgerError.NoErrors)
   const r = new BN(result.r);
   const s = new BN(result.s);  

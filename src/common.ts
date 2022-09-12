@@ -8,7 +8,7 @@ export const HASH_MAX_LENGTH = 63;
 export const INS = {
   GET_VERSION: 0x00,
   GET_APP_NAME: 0x01,
-  GET_ADDR: 0x02,
+  GET_PUB_KEY: 0x02,
   SIGN: 0x03,
 };
 
