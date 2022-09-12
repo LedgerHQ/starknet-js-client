@@ -17,15 +17,13 @@
 *   [Stark](#stark)
     *   [Parameters](#parameters)
     *   [Examples](#examples)
-    *   [getVersion](#getversion)
+    *   [getAppVersion](#getversion)
     *   [getAppInfo](#getappinfo)
     *   [getPubKey](#getpubkey)
         *   [Parameters](#parameters-1)
     *   [showPubKey](#showpubkey)
         *   [Parameters](#parameters-2)
         *   [Examples](#examples-1)
-    *   [sign](#sign)
-        *   [Parameters](#parameters-3)
     *   [signFelt](#signfelt)
         *   [Parameters](#parameters-4)
 
@@ -64,7 +62,11 @@ get Starknet public key derived from provided derivation path (shall start with 
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format (<https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md>)
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey*   @examplestark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey
+
+```javascript
+start.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
+```
 
 #### showPubKey
 
@@ -83,7 +85,7 @@ stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey
 
 
-#### signFelt
+#### sign
 
 sign the given hash over the Starknet elliptic curve
 
