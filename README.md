@@ -24,7 +24,7 @@
     *   [showPubKey](#showpubkey)
         *   [Parameters](#parameters-2)
         *   [Examples](#examples-1)
-    *   [signFelt](#signfelt)
+    *   [sign](#sign)
         *   [Parameters](#parameters-4)
 
 ### Stark
