@@ -1,5 +1,5 @@
 /********************************************************************************
- * (c) 2022 Ledger
+ *  (c) 2022 Ledger
  *  (c) 2019-2020 Zondax GmbH
  *  (c) 2016-2017 Ledger
  *
@@ -18,7 +18,7 @@
 import Transport from "@ledgerhq/hw-transport";
 import { serializePath } from "./helper";
 import {
-  ResponseAddress,
+  ResponsePublicKey,
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
@@ -39,13 +39,13 @@ import {
 export { LedgerError };
 export * from "./types";
 
-function processGetAddrResponse(response: Uint8Array) {
+function processGetPubkeyResponse(response: Uint8Array) {
   let partialResponse = response;
 
   const errorCodeData = partialResponse.subarray(-2);
   const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
-  //get public key len (variable)
+  //get public key len (64)
   const PKLEN = partialResponse[0];
   const publicKey = partialResponse.slice(1, 1 + PKLEN);
 
@@ -81,7 +81,7 @@ function hexToBytes(hex: string) {
  * Starknet API
  *
  * @example
- * import Stark from "@yogh/hw-app-starknet";
+ * import Stark from "@ledgerhq/hw-app-starknet";
  * const stark = new Stark(transport)
  */
 export default class Stark {
@@ -139,10 +139,10 @@ export default class Stark {
 
       const result: { errorMessage?: string; returnCode?: LedgerError } = {};
 
-      let appName = "err";
+      let appName = "undefined";
 
-      const appNameLen = response[1];
-      appName = response.subarray(2, 2 + appNameLen).toString("ascii");
+      const appNameLen = response[0];
+      appName = response.subarray(1, 1 + appNameLen).toString("ascii");
       
       return {
         returnCode,
@@ -156,16 +156,16 @@ export default class Stark {
    * get Starknet public key derived from provided derivation path
    * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
    * @return an object with publicKey
-   *  * @example
+   * @example
    * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async getPubKey(path: string): Promise<ResponseAddress> {
+  async getPubKey(path: string): Promise<ResponsePublicKey> {
     const serializedPath = Buffer.from(serializePath(path));
     return this.transport
       .send(CLA, INS.GET_PUB_KEY, P1_VALUES.ONLY_RETRIEVE, 0, serializedPath, [
         LedgerError.NoErrors,
       ])
-      .then(processGetAddrResponse, processErrorResponse);
+      .then(processGetPubkeyResponse, processErrorResponse);
   }
 
   /**
@@ -186,7 +186,7 @@ export default class Stark {
         serializedPath,
         [LedgerError.NoErrors]
       )
-      .then(processGetAddrResponse, processErrorResponse);
+      .then(processGetPubkeyResponse, processErrorResponse);
   }
 
   async signSendChunk(
