@@ -1,15 +1,12 @@
 const HARDENED = 0x80000000;
 
 export function serializePath(path: string): Uint8Array {
+  
   if (!path.startsWith("m")) {
     throw new Error("Path should start with 'm' (e.g 'm/44'/5757'/5'/0/3')");
   }
 
   const pathArray = path.split("/");
-
-  /*if (pathArray.length !== 5) {
-    throw new Error("Invalid path. (e.g \"m/44'/5757'/5'/0/3\")");
-  }*/
 
   const buf = new Uint8Array(1 + (pathArray.length - 1) * 4);
   buf[0] = pathArray.length - 1; //first byte is the path length

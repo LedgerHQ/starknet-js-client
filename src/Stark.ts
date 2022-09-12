@@ -124,61 +124,30 @@ export default class Stark {
    * get version of Nano Starknet application
    * @return an object with a major, minor, patch
    */
-  async getVersion(): Promise<ResponseVersion> {
+  async getAppVersion(): Promise<ResponseVersion> {
     return getVersion(this.transport).catch((err) => processErrorResponse(err));
   }
 
   /**
    * get information about Nano Starknet application
-   * @return an object with appName, appVersion
+   * @return an object with appName
    */
   async getAppInfo(): Promise<ResponseAppInfo> {
-    return this.transport.send(0xb0, 0x01, 0, 0).then((response) => {
+    return this.transport.send(CLA, INS.GET_APP_NAME, 0, 0).then((response) => {
       const errorCodeData = response.subarray(-2);
       const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
       const result: { errorMessage?: string; returnCode?: LedgerError } = {};
 
       let appName = "err";
-      let appVersion = "err";
-      let flagLen = 0;
-      let flagsValue = 0;
 
-      if (response[0] !== 1) {
-        // Ledger responds with format ID 1. There is no spec for any format != 1
-        result.errorMessage = "response format ID not recognized";
-        result.returnCode = LedgerError.DeviceIsBusy;
-      } else {
-        const appNameLen = response[1];
-        appName = response.subarray(2, 2 + appNameLen).toString("ascii");
-        let idx = 2 + appNameLen;
-        const appVersionLen = response[idx];
-        idx += 1;
-        appVersion = response
-          .subarray(idx, idx + appVersionLen)
-          .toString("ascii");
-        idx += appVersionLen;
-        const appFlagsLen = response[idx];
-        idx += 1;
-        flagLen = appFlagsLen;
-        flagsValue = response[idx];
-      }
-
+      const appNameLen = response[1];
+      appName = response.subarray(2, 2 + appNameLen).toString("ascii");
+      
       return {
         returnCode,
         errorMessage: errorCodeToString(returnCode),
-        //
-        appName,
-        appVersion,
-        flagLen,
-        flagsValue,
-        flagRecovery: (flagsValue & 1) !== 0,
-        // eslint-disable-next-line no-bitwise
-        flagSignedMcuCode: (flagsValue & 2) !== 0,
-        // eslint-disable-next-line no-bitwise
-        flagOnboarded: (flagsValue & 4) !== 0,
-        // eslint-disable-next-line no-bitwise
-        flagPINValidated: (flagsValue & 128) !== 0,
+        appName
       };
     }, processErrorResponse);
   }
@@ -259,10 +228,9 @@ export default class Stark {
 
         if (returnCode === LedgerError.NoErrors && response.length > 2) {
           return {
-            r: response.subarray(0, 32),
-            s: response.subarray(32, 32 + 32),
-            v: response[64],
-            hash: response.subarray(65, 65 + 32),
+            r: response.subarray(1, 1 + 32),
+            s: response.subarray(1 + 32, 1 + 32 + 32),
+            v: response[65],
             returnCode: returnCode,
             errorMessage: errorMessage,
           };
@@ -276,50 +244,13 @@ export default class Stark {
   }
 
   /**
-   * sign the given hash over the Starknet elliptic curve (!! apply a SHA256() on message before computing signature)
-   * @param path a path in EIP-2645 format
-   * @param message hexadecimal hash to sign
-   * @return an object with (r, s, v) signature
-   */
-  async sign(path: string, message: Uint8Array) {
-    return this.signGetChunks(path, message).then((chunks) => {
-      return this.signSendChunk(1, chunks.length, chunks[0], INS.SIGN).then(
-        async (response) => {
-          let result = {
-            returnCode: response.returnCode,
-            errorMessage: response.errorMessage,
-            hash: null as null | Uint8Array,
-            r: null as null | Uint8Array,
-            s: null as null | Uint8Array,
-            v: null as null | number,
-          };
-
-          for (let i = 1; i < chunks.length; i += 1) {
-            // eslint-disable-next-line no-await-in-loop
-            result = await this.signSendChunk(
-              1 + i,
-              chunks.length,
-              chunks[i],
-              INS.SIGN
-            );
-            if (result.returnCode !== LedgerError.NoErrors) {
-              break;
-            }
-          }
-          return result;
-        },
-        processErrorResponse
-      );
-    }, processErrorResponse);
-  }
-
-  /**
    * sign the given hash over the Starknet elliptic curve
    * @param path a path in EIP-2645 format
    * @param message hexadecimal hash to sign
    * @return an object with (r, s, v) signature
    */
-  async signFelt(path: string, hash: string, show = true) {
+  async sign(path: string, hash: string, show = true) {
+    
     const felt = hexToBytes(fixHash(hash));
 
     return this.signGetChunks(path, felt).then((chunks) => {
@@ -327,13 +258,12 @@ export default class Stark {
         1,
         chunks.length,
         chunks[0],
-        INS.SIGN_FELT,
+        INS.SIGN,
         show ? 1 : 0
       ).then(async (response) => {
         let result = {
           returnCode: response.returnCode,
           errorMessage: response.errorMessage,
-          hash: undefined as undefined | Uint8Array,
           r: null as null | Uint8Array,
           s: null as null | Uint8Array,
           v: null as null | number,
@@ -344,10 +274,9 @@ export default class Stark {
             1 + i,
             chunks.length,
             chunks[i],
-            INS.SIGN_FELT,
+            INS.SIGN,
             show ? 1 : 0
           );
-          result.hash = undefined;
 
           if (result.returnCode !== LedgerError.NoErrors) {
             break;
