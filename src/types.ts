@@ -18,7 +18,6 @@ export interface ResponseAppInfo extends ResponseBase {
 }
 
 export interface ResponseSign extends ResponseBase {
-  hash: Uint8Array;
   r: Uint8Array;
   s: Uint8Array;
   v: number;

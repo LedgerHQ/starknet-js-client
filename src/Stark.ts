@@ -35,6 +35,7 @@ import {
   PAYLOAD_TYPE,
   processErrorResponse,
 } from "./common";
+import { numberLiteralTypeAnnotation } from "@babel/types";
 
 export { LedgerError };
 export * from "./types";
@@ -122,7 +123,7 @@ export default class Stark {
 
   /**
    * get version of Nano Starknet application
-   * @return an object with a major, minor, patch
+   * @return ResponseVersion an object with a major, minor, patch
    */
   async getAppVersion(): Promise<ResponseVersion> {
     return getVersion(this.transport).catch((err) => processErrorResponse(err));
@@ -130,7 +131,7 @@ export default class Stark {
 
   /**
    * get information about Nano Starknet application
-   * @return an object with appName
+   * @return ResponseAppInfo an object with appName
    */
   async getAppInfo(): Promise<ResponseAppInfo> {
     return this.transport.send(CLA, INS.GET_APP_NAME, 0, 0).then((response) => {
@@ -155,7 +156,7 @@ export default class Stark {
   /**
    * get Starknet public key derived from provided derivation path
    * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
-   * @return an object with publicKey
+   * @return ResponsePublicKey an object with publicKey
    * @example
    * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
@@ -171,11 +172,11 @@ export default class Stark {
   /**
    * get and show Starknet public key derived from provided derivation path
    * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
-   * @return an object with publicKey
+   * @return ResponsePublicKey an object with publicKey
    * @example
    * stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async showPubKey(path: string): Promise<ResponseAddress> {
+  async showPubKey(path: string): Promise<ResponsePublicKey> {
     const serializedPath = Buffer.from(serializePath(path));
     return this.transport
       .send(
@@ -245,11 +246,11 @@ export default class Stark {
 
   /**
    * sign the given hash over the Starknet elliptic curve
-   * @param path a path in EIP-2645 format
-   * @param message hexadecimal hash to sign
-   * @return an object with (r, s, v) signature
+   * @param path Derivation path in EIP-2645 format
+   * @param hash Pedersen hash to be signed
+   * @return ResponseSign an object with (r, s, v) signature
    */
-  async sign(path: string, hash: string, show = true) {
+  async sign(path: string, hash: string, show = true): Promise<ResponseSign> {
     
     const felt = hexToBytes(fixHash(hash));
 
@@ -261,13 +262,19 @@ export default class Stark {
         INS.SIGN,
         show ? 1 : 0
       ).then(async (response) => {
-        let result = {
-          returnCode: response.returnCode,
-          errorMessage: response.errorMessage,
-          r: null as null | Uint8Array,
-          s: null as null | Uint8Array,
-          v: null as null | number,
+
+        if (response.returnCode !== LedgerError.NoErrors) {
+          return response;
+        }
+
+        let result: ResponseSign = {
+          returnCode: LedgerError.ExecutionError,
+          errorMessage: "Execution Error",
+          r: new Uint8Array(0),
+          s: new Uint8Array(0),
+          v: 0
         };
+
         for (let i = 1; i < chunks.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
           result = await this.signSendChunk(
