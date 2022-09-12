@@ -44,7 +44,7 @@ import Stark from "@yogh/hw-app-starknet";
 const stark = new Stark(transport)
 ```
 
-#### getVersion
+#### getAppVersion
 
 get version of Nano Starknet application
 
@@ -58,7 +58,7 @@ Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 #### getPubKey
 
-get Starknet public key derived from provided derivation path
+get Starknet public key derived from provided derivation path (shall start with m/2645')
 
 ##### Parameters
 
@@ -68,7 +68,7 @@ Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 #### showPubKey
 
-get and show Starknet public key derived from provided derivation path
+get and show Starknet public key derived from provided derivation path (shall start with m/2645')
 
 ##### Parameters
 
@@ -82,16 +82,6 @@ stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAddress>** an object with publicKey
 
-#### sign
-
-sign the given hash over the Starknet elliptic curve (!! apply a SHA256() on message before computing signature)
-
-##### Parameters
-
-*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format
-*   `message` **[Uint8Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array)** hexadecimal hash to sign
-
-Returns **any** an object with (r, s, v) signature
 
 #### signFelt
 
