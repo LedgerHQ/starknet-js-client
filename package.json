@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/hw-app-starknet",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Ledger Hardware Wallet Starknet Application API",
   "keywords": [
     "Ledger",
