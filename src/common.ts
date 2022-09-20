@@ -10,6 +10,7 @@ export const INS = {
   GET_APP_NAME: 0x01,
   GET_PUB_KEY: 0x02,
   SIGN: 0x03,
+  SIGN_TX: 0x04
 };
 
 export const PAYLOAD_TYPE = {

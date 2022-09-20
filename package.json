@@ -28,7 +28,9 @@
     "url": "https://github.com/yogh333/hw-app-starknet/issues"
   },
   "dependencies": {
-    "@ledgerhq/hw-transport": "^6.27.1"
+    "@ledgerhq/hw-transport": "^6.27.1",
+    "@types/bn.js": "^5.1.1",
+    "bn.js": "^5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.0",
@@ -41,7 +43,7 @@
     "documentation": "^13.2.5",
     "jest": "^28.1.0",
     "prettier": "^2.6.2",
-    "starknet": "^3.11.0",
+    "starknet": "^4.4.2",
     "ts-jest": "^28.0.3",
     "ts-node": "^10.8.0",
     "typescript": "^4.6.4"

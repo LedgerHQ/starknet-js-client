@@ -16,12 +16,14 @@
  *  limitations under the License.
  ********************************************************************************/
 import Transport from "@ledgerhq/hw-transport";
-import { serializePath } from "./helper";
+import { isHex, serializePath } from "./helper";
 import {
   ResponsePublicKey,
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
+  Call,
+  CallDetails
 } from "./types";
 import {
   HASH_MAX_LENGTH,
@@ -35,10 +37,12 @@ import {
   PAYLOAD_TYPE,
   processErrorResponse,
 } from "./common";
-import { numberLiteralTypeAnnotation } from "@babel/types";
+
+import BN from "bn.js";
 
 export { LedgerError };
 export * from "./types";
+
 
 function processGetPubkeyResponse(response: Uint8Array) {
   let partialResponse = response;
@@ -293,4 +297,70 @@ export default class Stark {
       }, processErrorResponse);
     }, processErrorResponse);
   }
+
+  async signTx(path: string, tx: Call, txDetails: CallDetails) {
+
+    const chunks: Uint8Array[] = [];
+
+    /* chunk 0 is derivation path */
+    const chunk0 = serializePath(path);
+    chunks.push(chunk0);
+
+    /* chunk 1 = accountAddress (32 bytes) + maxFee (32 bytes) + nonce (32 bytes) + version (32 bytes) = 128 bytes*/
+    const accountAddress = new BN(txDetails.accountAddress.replace(/^0x*/,''), 16);
+    const maxFee = new BN(txDetails.maxFee as string, 10);
+    const nonce = new BN(txDetails.nonce as string, 10);
+    const version = new BN(txDetails.version as string, 10);
+
+    const chunk1 = new Uint8Array([
+      ...accountAddress.toArray('be', 32),
+      ...maxFee.toArray('be', 32),
+      ...nonce.toArray('be', 32),
+      ...version.toArray('be', 32)
+    ]);
+    
+    chunks.push(chunk1);
+
+    /* chunk 2 = to (32 bytes) + selector length (1 byte) + selector (selector length bytes) + call_data length (1 byte) */
+    const to = new BN(tx.contractAddress.replace(/^0x*/,''), 16);
+    const selectorLength = tx.entryPoint.length;
+    const selector = Uint8Array.from(tx.entryPoint, c=>c.charCodeAt(0));
+    const calldata_len = tx.calldata ? tx.calldata.length : 0;
+
+    const chunk2 = new Uint8Array([
+      ...to.toArray('be', 32),
+      selectorLength,
+      ...selector,
+      calldata_len
+    ]);
+
+    chunks.push(chunk2);
+    
+    /* calldata chunks */
+    
+    if ((calldata_len !== 0) && (tx.calldata)) {
+      for (let i = 0; i < calldata_len; i++) {
+        let callData: BN;
+        if (isHex(tx.calldata[i])) {
+          callData = new BN(tx.calldata[i].replace(/^0x*/,''), 16);  
+        }
+        else {
+          callData = new BN(tx.calldata[i], 10);
+        }
+        let chunk = new Uint8Array([...callData.toArray('be', 32)]);
+        chunks.push(chunk);
+      }
+    }
+
+    for (let c = 0; c < chunks.length; c++){
+      console.log("chunk " + c);
+      console.log(chunks[c]);
+    }
+
+    /*await this.transport
+      .send(CLA, INS.SIGN_TX, PAYLOAD_TYPE.INIT, 0x80, Buffer.from(chunks[0]), [LedgerError.NoErrors]);*/
+    
+  }
 }
+
+
