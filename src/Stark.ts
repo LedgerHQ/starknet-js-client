@@ -306,17 +306,19 @@ export default class Stark {
     const chunk0 = serializePath(path);
     chunks.push(chunk0);
 
-    /* chunk 1 = accountAddress (32 bytes) + maxFee (32 bytes) + nonce (32 bytes) + version (32 bytes) = 128 bytes*/
+    /* chunk 1 = accountAddress (32 bytes) + maxFee (32 bytes) + nonce (32 bytes) + version (32 bytes) + chain_id (32 bytes)= 160 bytes*/
     const accountAddress = new BN(txDetails.accountAddress.replace(/^0x*/,''), 16);
     const maxFee = new BN(txDetails.maxFee as string, 10);
     const nonce = new BN(txDetails.nonce as string, 10);
     const version = new BN(txDetails.version as string, 10);
+    const chain_id = new BN(txDetails.chainId.replace(/^0x*/,''), 16);
 
     const chunk1 = new Uint8Array([
       ...accountAddress.toArray('be', 32),
       ...maxFee.toArray('be', 32),
       ...nonce.toArray('be', 32),
-      ...version.toArray('be', 32)
+      ...version.toArray('be', 32),
+      ...chain_id.toArray('be', 32)
     ]);
     
     chunks.push(chunk1);
@@ -357,9 +359,27 @@ export default class Stark {
       console.log(chunks[c]);
     }
 
-    /*await this.transport
-      .send(CLA, INS.SIGN_TX, PAYLOAD_TYPE.INIT, 0x80, Buffer.from(chunks[0]), [LedgerError.NoErrors]);*/
-    
+    let response = await this.transport.send(
+      CLA, 
+      INS.SIGN_TX, 
+      PAYLOAD_TYPE.INIT, 
+      0x80, 
+      Buffer.from(chunks[0]), 
+      [LedgerError.NoErrors],
+    );
+    let errorCodeData = response.subarray(-2);
+    let returnCode = errorCodeData[0] * 256 + errorCodeData[1];
+    let chunk_idx = 1;      
+    while ((returnCode === LedgerError.NoErrors) && (chunk_idx < chunks.length)){
+      response = await this.transport.send(
+        CLA, 
+        INS.SIGN_TX, 
+        chunk_idx < (chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST, 
+        chunk_idx < (chunks.length - 1) ? 0x80:0x00, 
+        Buffer.from(chunks[chunk_idx++]), 
+        [LedgerError.NoErrors],
+      );
+    }    
   }
 }
 

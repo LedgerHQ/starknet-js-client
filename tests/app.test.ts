@@ -1,8 +1,9 @@
 import Stark from "../src/Stark";
 import { LedgerError } from "../src/common";
+import { Call, CallDetails } from "../src/types";
 import TransportNodeHid from "@ledgerhq/hw-transport-node-hid";
 import BN from "bn.js";
-import { ec } from "starknet";
+import { ec, constants } from "starknet";
 
 let transport;
 let app;
@@ -76,4 +77,22 @@ test('sign(61 digits)', async () => {
 
   const kp = ec.getKeyPairFromPublicKey(new BN(publicKey, 16, 'be'));
   expect(ec.verify(kp, HASH_61, [r.toString(), s.toString()])).toBe(true);
+})
+
+test.only('sign Tx', async () => {
+
+  let txDetails: CallDetails = {
+    accountAddress: "0x788de247ff52af4e23afe47890e2870a6c750cca97388dafc3a10401bb6e250",
+    chainId: constants.StarknetChainId.MAINNET,
+    nonce: 1,
+    maxFee: "100000000",
+    version: 1
+  }
+
+  let tx: Call = {
+    contractAddress: "0xc7c0a102d298d0310a381d1b3eb49f3c34267a5ace4a6e9d58e7a8e5dbec33",
+    entryPoint: "mint",
+    calldata: ["0x788de247ff52af4e23afe47890e2870a6c750cca97388dafc3a10401bb6e250", '1000']
+  }
+  await app.signTx(PATH, tx, txDetails);
 })
