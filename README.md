@@ -27,6 +27,8 @@ Typescript host client used to interact with Starknet Nano application
         *   [Examples](#examples-2)
     *   [sign](#sign)
         *   [Parameters](#parameters-3)
+    *   [signTx](#signtx)
+        *   [Parameters](#parameters-4)
 
 ### Stark
 
@@ -53,7 +55,7 @@ Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 get information about Nano Starknet application
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAppInfo>** an object with appName
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAppInfo>** an object with appName="STARKNET"
 
 #### getPubKey
 
@@ -96,5 +98,18 @@ sign the given hash over the Starknet elliptic curve
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
 *   `show`   (optional, default `true`)
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
+
+#### signTx
+
+sign the transaction (display Tx fields before signing)
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `tx` **Call** tx targeted contract
+*   `txDetails` **CallDetails** account abstraction parameters
+*   `abi` **Abi?** target contract's abi
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature

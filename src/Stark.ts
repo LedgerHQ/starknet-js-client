@@ -23,7 +23,9 @@ import {
   ResponseSign,
   ResponseVersion,
   Call,
-  CallDetails
+  CallDetails,
+  Abi,
+  CalldataMetadata
 } from "./types";
 import {
   HASH_MAX_LENGTH,
@@ -135,19 +137,16 @@ export default class Stark {
 
   /**
    * get information about Nano Starknet application
-   * @return an object with appName
+   * @return an object with appName="STARKNET"
    */
   async getAppInfo(): Promise<ResponseAppInfo> {
     return this.transport.send(CLA, INS.GET_APP_NAME, 0, 0).then((response) => {
       const errorCodeData = response.subarray(-2);
       const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
-      const result: { errorMessage?: string; returnCode?: LedgerError } = {};
-
       let appName = "undefined";
 
-      const appNameLen = response[0];
-      appName = response.subarray(1, 1 + appNameLen).toString("ascii");
+      appName = response.subarray(0, 8).toString("ascii");
       
       return {
         returnCode,
@@ -194,23 +193,17 @@ export default class Stark {
       .then(processGetPubkeyResponse, processErrorResponse);
   }
 
-  async signSendChunk(
+  async sendChunk(
     chunkIdx: number,
     chunkNum: number,
     chunk: Uint8Array,
-    ins: number = INS.SIGN,
-    p2 = 0
+    ins: number = INS.GET_APP_NAME,
+    p1: number = 0x00,
+    p2: number = 0x00
   ): Promise<ResponseSign> {
-    let payloadType = PAYLOAD_TYPE.ADD;
-    if (chunkIdx === 1) {
-      payloadType = PAYLOAD_TYPE.INIT;
-    }
-    if (chunkIdx === chunkNum) {
-      payloadType = PAYLOAD_TYPE.LAST;
-    }
 
     return this.transport
-      .send(CLA, ins, payloadType, p2, Buffer.from(chunk), [
+      .send(CLA, ins, p1, p2, Buffer.from(chunk), [
         LedgerError.NoErrors,
         LedgerError.DataIsInvalid,
         LedgerError.BadKeyHandle,
@@ -259,11 +252,12 @@ export default class Stark {
     const felt = hexToBytes(fixHash(hash));
 
     return this.signGetChunks(path, felt).then((chunks) => {
-      return this.signSendChunk(
-        1,
+      return this.sendChunk(
+        0,
         chunks.length,
         chunks[0],
         INS.SIGN,
+        PAYLOAD_TYPE.INIT,
         show ? 1 : 0
       ).then(async (response) => {
 
@@ -281,12 +275,13 @@ export default class Stark {
 
         for (let i = 1; i < chunks.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
-          result = await this.signSendChunk(
-            1 + i,
+          result = await this.sendChunk(
+            i,
             chunks.length,
             chunks[i],
             INS.SIGN,
-            show ? 1 : 0
+            (i < chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST,
+            show ? 0x01 : 0x00
           );
 
           if (result.returnCode !== LedgerError.NoErrors) {
@@ -298,7 +293,15 @@ export default class Stark {
     }, processErrorResponse);
   }
 
-  async signTx(path: string, tx: Call, txDetails: CallDetails) {
+  /**
+   * sign the transaction (display Tx fields before signing)
+   * @param path Derivation path in EIP-2645 format
+   * @param tx tx targeted contract
+   * @param txDetails account abstraction parameters
+   * @param abi target contract's abi
+   * @return an object with (r, s, v) signature
+   */
+  async signTx(path: string, tx: Call, txDetails: CallDetails, abi?: Abi): Promise<ResponseSign> {
 
     const chunks: Uint8Array[] = [];
 
@@ -339,47 +342,77 @@ export default class Stark {
     chunks.push(chunk2);
     
     /* calldata chunks */
+    const encoder = new TextEncoder();
+
+    let calldata_metadata: CalldataMetadata[] = [];
+    if (abi) {
+      /* parse abi to display relevant info when signing tx on Nano */
+      console.warn("ABI parsing not yet implemented");
+    }
+    
+    tx.calldata?.forEach((s, i) => {
+      let meta: CalldataMetadata = {
+        name: "Calldata #"+i+":",
+        encoded: encoder.encode("Calldata #"+i+":")
+      };
+      calldata_metadata.push(meta)
+    });
     
     if ((calldata_len !== 0) && (tx.calldata)) {
-      for (let i = 0; i < calldata_len; i++) {
+      tx.calldata.forEach((s, i) => {
         let callData: BN;
-        if (isHex(tx.calldata[i])) {
-          callData = new BN(tx.calldata[i].replace(/^0x*/,''), 16);  
+        if (isHex(s)) {
+          callData = new BN(s.replace(/^0x*/,''), 16);  
         }
         else {
-          callData = new BN(tx.calldata[i], 10);
+          callData = new BN(s, 10);
         }
-        let chunk = new Uint8Array([...callData.toArray('be', 32)]);
+        let chunk = new Uint8Array([
+          calldata_metadata[i].encoded.length,
+          ...calldata_metadata[i].encoded,
+          ...callData.toArray('be', 32)
+        ]);
         chunks.push(chunk);
-      }
+      });
     }
 
-    for (let c = 0; c < chunks.length; c++){
-      console.log("chunk " + c);
-      console.log(chunks[c]);
-    }
-
-    let response = await this.transport.send(
-      CLA, 
-      INS.SIGN_TX, 
-      PAYLOAD_TYPE.INIT, 
+    return this.sendChunk(
+      0,
+      chunks.length,
+      chunks[0],
+      INS.SIGN_TX,
+      PAYLOAD_TYPE.INIT,
       0x80, 
-      Buffer.from(chunks[0]), 
-      [LedgerError.NoErrors],
-    );
-    let errorCodeData = response.subarray(-2);
-    let returnCode = errorCodeData[0] * 256 + errorCodeData[1];
-    let chunk_idx = 1;      
-    while ((returnCode === LedgerError.NoErrors) && (chunk_idx < chunks.length)){
-      response = await this.transport.send(
-        CLA, 
-        INS.SIGN_TX, 
-        chunk_idx < (chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST, 
-        chunk_idx < (chunks.length - 1) ? 0x80:0x00, 
-        Buffer.from(chunks[chunk_idx++]), 
-        [LedgerError.NoErrors],
-      );
-    }    
+    ).then(async (response) => {
+
+      if (response.returnCode !== LedgerError.NoErrors) {
+        return response;
+      }
+
+      let result: ResponseSign = {
+        returnCode: LedgerError.ExecutionError,
+        errorMessage: "Execution Error",
+        r: new Uint8Array(0),
+        s: new Uint8Array(0),
+        v: 0
+      };
+
+      for (let i = 1; i < chunks.length; i += 1) {
+        result = await this.sendChunk(
+          i,
+          chunks.length,
+          chunks[i],
+          INS.SIGN_TX,
+          i < (chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST, 
+          i < (chunks.length - 1) ? 0x80:0x00
+        );
+
+        if (result.returnCode !== LedgerError.NoErrors) {
+          break;
+        }
+      }
+      return result;
+    }, processErrorResponse);
   }
 }
 
