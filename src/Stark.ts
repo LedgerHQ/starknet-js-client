@@ -16,12 +16,16 @@
  *  limitations under the License.
  ********************************************************************************/
 import Transport from "@ledgerhq/hw-transport";
-import { serializePath } from "./helper";
+import { isHex, serializePath } from "./helper";
 import {
   ResponsePublicKey,
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
+  Call,
+  CallDetails,
+  Abi,
+  CalldataMetadata
 } from "./types";
 import {
   HASH_MAX_LENGTH,
@@ -35,10 +39,12 @@ import {
   PAYLOAD_TYPE,
   processErrorResponse,
 } from "./common";
-import { numberLiteralTypeAnnotation } from "@babel/types";
+
+import BN from "bn.js";
 
 export { LedgerError };
 export * from "./types";
+
 
 function processGetPubkeyResponse(response: Uint8Array) {
   let partialResponse = response;
@@ -131,19 +137,16 @@ export default class Stark {
 
   /**
    * get information about Nano Starknet application
-   * @return an object with appName
+   * @return an object with appName="STARKNET"
    */
   async getAppInfo(): Promise<ResponseAppInfo> {
     return this.transport.send(CLA, INS.GET_APP_NAME, 0, 0).then((response) => {
       const errorCodeData = response.subarray(-2);
       const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
-      const result: { errorMessage?: string; returnCode?: LedgerError } = {};
-
       let appName = "undefined";
 
-      const appNameLen = response[0];
-      appName = response.subarray(1, 1 + appNameLen).toString("ascii");
+      appName = response.subarray(0, 8).toString("ascii");
       
       return {
         returnCode,
@@ -190,23 +193,17 @@ export default class Stark {
       .then(processGetPubkeyResponse, processErrorResponse);
   }
 
-  async signSendChunk(
+  async sendChunk(
     chunkIdx: number,
     chunkNum: number,
     chunk: Uint8Array,
-    ins: number = INS.SIGN,
-    p2 = 0
+    ins: number = INS.GET_APP_NAME,
+    p1: number = 0x00,
+    p2: number = 0x00
   ): Promise<ResponseSign> {
-    let payloadType = PAYLOAD_TYPE.ADD;
-    if (chunkIdx === 1) {
-      payloadType = PAYLOAD_TYPE.INIT;
-    }
-    if (chunkIdx === chunkNum) {
-      payloadType = PAYLOAD_TYPE.LAST;
-    }
 
     return this.transport
-      .send(CLA, ins, payloadType, p2, Buffer.from(chunk), [
+      .send(CLA, ins, p1, p2, Buffer.from(chunk), [
         LedgerError.NoErrors,
         LedgerError.DataIsInvalid,
         LedgerError.BadKeyHandle,
@@ -255,11 +252,12 @@ export default class Stark {
     const felt = hexToBytes(fixHash(hash));
 
     return this.signGetChunks(path, felt).then((chunks) => {
-      return this.signSendChunk(
-        1,
+      return this.sendChunk(
+        0,
         chunks.length,
         chunks[0],
         INS.SIGN,
+        PAYLOAD_TYPE.INIT,
         show ? 1 : 0
       ).then(async (response) => {
 
@@ -277,12 +275,13 @@ export default class Stark {
 
         for (let i = 1; i < chunks.length; i += 1) {
           // eslint-disable-next-line no-await-in-loop
-          result = await this.signSendChunk(
-            1 + i,
+          result = await this.sendChunk(
+            i,
             chunks.length,
             chunks[i],
             INS.SIGN,
-            show ? 1 : 0
+            (i < chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST,
+            show ? 0x01 : 0x00
           );
 
           if (result.returnCode !== LedgerError.NoErrors) {
@@ -293,4 +292,128 @@ export default class Stark {
       }, processErrorResponse);
     }, processErrorResponse);
   }
+
+  /**
+   * sign the transaction (display Tx fields before signing)
+   * @param path Derivation path in EIP-2645 format
+   * @param tx tx targeted contract
+   * @param txDetails account abstraction parameters
+   * @param abi target contract's abi
+   * @return an object with (r, s, v) signature
+   */
+  async signTx(path: string, tx: Call, txDetails: CallDetails, abi?: Abi): Promise<ResponseSign> {
+
+    const chunks: Uint8Array[] = [];
+
+    /* chunk 0 is derivation path */
+    const chunk0 = serializePath(path);
+    chunks.push(chunk0);
+
+    /* chunk 1 = accountAddress (32 bytes) + maxFee (32 bytes) + nonce (32 bytes) + version (32 bytes) + chain_id (32 bytes)= 160 bytes*/
+    const accountAddress = new BN(txDetails.accountAddress.replace(/^0x*/,''), 16);
+    const maxFee = new BN(txDetails.maxFee as string, 10);
+    const nonce = new BN(txDetails.nonce as string, 10);
+    const version = new BN(txDetails.version as string, 10);
+    const chain_id = new BN(txDetails.chainId.replace(/^0x*/,''), 16);
+
+    const chunk1 = new Uint8Array([
+      ...accountAddress.toArray('be', 32),
+      ...maxFee.toArray('be', 32),
+      ...nonce.toArray('be', 32),
+      ...version.toArray('be', 32),
+      ...chain_id.toArray('be', 32)
+    ]);
+    
+    chunks.push(chunk1);
+
+    /* chunk 2 = to (32 bytes) + selector length (1 byte) + selector (selector length bytes) + call_data length (1 byte) */
+    const to = new BN(tx.contractAddress.replace(/^0x*/,''), 16);
+    const selectorLength = tx.entryPoint.length;
+    const selector = Uint8Array.from(tx.entryPoint, c=>c.charCodeAt(0));
+    const calldata_len = tx.calldata ? tx.calldata.length : 0;
+
+    const chunk2 = new Uint8Array([
+      ...to.toArray('be', 32),
+      selectorLength,
+      ...selector,
+      calldata_len
+    ]);
+
+    chunks.push(chunk2);
+    
+    /* calldata chunks */
+    const encoder = new TextEncoder();
+
+    let calldata_metadata: CalldataMetadata[] = [];
+    if (abi) {
+      /* parse abi to display relevant info when signing tx on Nano */
+      console.warn("ABI parsing not yet implemented");
+    }
+    
+    tx.calldata?.forEach((s, i) => {
+      let meta: CalldataMetadata = {
+        name: "Calldata #"+i+":",
+        encoded: encoder.encode("Calldata #"+i+":")
+      };
+      calldata_metadata.push(meta)
+    });
+    
+    if ((calldata_len !== 0) && (tx.calldata)) {
+      tx.calldata.forEach((s, i) => {
+        let callData: BN;
+        if (isHex(s)) {
+          callData = new BN(s.replace(/^0x*/,''), 16);  
+        }
+        else {
+          callData = new BN(s, 10);
+        }
+        let chunk = new Uint8Array([
+          calldata_metadata[i].encoded.length,
+          ...calldata_metadata[i].encoded,
+          ...callData.toArray('be', 32)
+        ]);
+        chunks.push(chunk);
+      });
+    }
+
+    return this.sendChunk(
+      0,
+      chunks.length,
+      chunks[0],
+      INS.SIGN_TX,
+      PAYLOAD_TYPE.INIT,
+      0x80, 
+    ).then(async (response) => {
+
+      if (response.returnCode !== LedgerError.NoErrors) {
+        return response;
+      }
+
+      let result: ResponseSign = {
+        returnCode: LedgerError.ExecutionError,
+        errorMessage: "Execution Error",
+        r: new Uint8Array(0),
+        s: new Uint8Array(0),
+        v: 0
+      };
+
+      for (let i = 1; i < chunks.length; i += 1) {
+        result = await this.sendChunk(
+          i,
+          chunks.length,
+          chunks[i],
+          INS.SIGN_TX,
+          i < (chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST, 
+          i < (chunks.length - 1) ? 0x80:0x00
+        );
+
+        if (result.returnCode !== LedgerError.NoErrors) {
+          break;
+        }
+      }
+      return result;
+    }, processErrorResponse);
+  }
 }
+
+
