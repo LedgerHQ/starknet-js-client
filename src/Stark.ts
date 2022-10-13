@@ -328,8 +328,8 @@ export default class Stark {
 
     /* chunk 2 = to (32 bytes) + selector length (1 byte) + selector (selector length bytes) + call_data length (1 byte) */
     const to = new BN(tx.contractAddress.replace(/^0x*/,''), 16);
-    const selectorLength = tx.entryPoint.length;
-    const selector = Uint8Array.from(tx.entryPoint, c=>c.charCodeAt(0));
+    const selectorLength = tx.entrypoint.length;
+    const selector = Uint8Array.from(tx.entrypoint, c=>c.charCodeAt(0));
     const calldata_len = tx.calldata ? tx.calldata.length : 0;
 
     const chunk2 = new Uint8Array([

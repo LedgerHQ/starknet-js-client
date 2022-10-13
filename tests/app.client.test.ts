@@ -168,7 +168,7 @@ test('sign Tx', async () => {
 
   let tx: Call = {
     contractAddress: "0x0507446de5cfcb833d4e786f3a0510deb2429ae753741a836a7efa80c9c747cb",
-    entryPoint: "mint",
+    entrypoint: "mint",
     calldata: ["0x7e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a", '1000']
   }
 

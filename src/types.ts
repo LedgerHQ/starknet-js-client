@@ -35,7 +35,7 @@ export type CalldataMetadata = {
 
 export type Call = {
   contractAddress: string;
-  entryPoint: string;
+  entrypoint: string;
   calldata?: string[];
 };
 
