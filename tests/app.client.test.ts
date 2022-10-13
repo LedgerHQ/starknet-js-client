@@ -2,7 +2,7 @@ import {
   openTransportReplayer,
   RecordStore,
 } from "@ledgerhq/hw-transport-mocker";
-import Stark from "../src/Stark";
+import { Stark } from "../src/Stark";
 import { LedgerError } from "../src/common";
 import { Call, CallDetails } from "../src/types";
 import BN from "bn.js";

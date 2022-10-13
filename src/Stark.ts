@@ -91,7 +91,7 @@ function hexToBytes(hex: string) {
  * import Stark from "@ledgerhq/hw-app-starknet";
  * const stark = new Stark(transport)
  */
-export default class Stark {
+export class Stark {
   transport;
 
   constructor(transport: Transport) {
