@@ -33,13 +33,13 @@ export type CalldataMetadata = {
   //type: 'felt' | 'felt*' | string;
 }
 
-export type Call = {
+export type Calldata = {
   contractAddress: string;
   entrypoint: string;
   calldata?: string[];
 };
 
-export type CallDetails = {
+export type TxDetails = {
   nonce?: BigNumberish;
   maxFee?: BigNumberish;
   version?: BigNumberish;

@@ -22,8 +22,8 @@ import {
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
-  Call,
-  CallDetails,
+  Calldata,
+  TxDetails,
   Abi,
   CalldataMetadata
 } from "./types";
@@ -301,7 +301,7 @@ export class Stark {
    * @param abi target contract's abi
    * @return an object with (r, s, v) signature
    */
-  async signTx(path: string, tx: Call, txDetails: CallDetails, abi?: Abi): Promise<ResponseSign> {
+  async signTx(path: string, tx: Calldata, txDetails: TxDetails, abi?: Abi): Promise<ResponseSign> {
 
     const chunks: Uint8Array[] = [];
 
