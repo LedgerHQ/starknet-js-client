@@ -1,5 +1,5 @@
 /********************************************************************************
- *  (c) 2022 Ledger
+ *  (c) 2022-2023 Ledger
  *  (c) 2019-2020 Zondax GmbH
  *  (c) 2016-2017 Ledger
  *
@@ -22,6 +22,7 @@ import {
   ResponseAppInfo,
   ResponseSign,
   ResponseVersion,
+  ResponseGeneric,
   Calldata,
   TxDetails,
   Abi,
@@ -32,10 +33,8 @@ import {
   CHUNK_SIZE,
   CLA,
   errorCodeToString,
-  getVersion,
   INS,
   LedgerError,
-  P1_VALUES,
   PAYLOAD_TYPE,
   processErrorResponse,
 } from "./common";
@@ -44,27 +43,6 @@ import BN from "bn.js";
 
 export { LedgerError };
 export * from "./types";
-
-
-function processGetPubkeyResponse(response: Uint8Array) {
-  let partialResponse = response;
-
-  const errorCodeData = partialResponse.subarray(-2);
-  const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
-
-  //get public key len (64)
-  const PKLEN = partialResponse[0];
-  const publicKey = partialResponse.slice(1, 1 + PKLEN);
-
-  //"advance" buffer
-  partialResponse = partialResponse.subarray(1 + PKLEN);
-
-  return {
-    publicKey,
-    returnCode,
-    errorMessage: errorCodeToString(returnCode),
-  };
-}
 
 /* see https://github.com/0xs34n/starknet.js/blob/develop/src/utils/ellipticCurve.ts#L29 */
 function fixHash(hash: string) {
@@ -89,10 +67,11 @@ function hexToBytes(hex: string) {
  *
  * @example
  * import Stark from "@ledgerhq/hw-app-starknet";
- * const stark = new Stark(transport)
+ * const stark = new StarknetClient(transport)
  */
-export class Stark {
-  transport;
+export class StarknetClient {
+  
+  transport: Transport;
 
   constructor(transport: Transport) {
     this.transport = transport;
@@ -101,109 +80,14 @@ export class Stark {
     }
   }
 
-  static prepareChunks(message: Uint8Array, serializedPathBuffer?: Uint8Array) {
-    const chunks: Uint8Array[] = [];
-
-    // First chunk (only path)
-    if (serializedPathBuffer !== undefined) {
-      // First chunk (only path)
-      chunks.push(serializedPathBuffer!);
-    }
-
-    const messageBuffer = Uint8Array.from(message);
-
-    for (let i = 0; i < messageBuffer.length; i += CHUNK_SIZE) {
-      let end = i + CHUNK_SIZE;
-      if (i > messageBuffer.length) {
-        end = messageBuffer.length;
-      }
-      chunks.push(messageBuffer.subarray(i, end));
-    }
-
-    return chunks;
-  }
-
-  async signGetChunks(path: string, message: Uint8Array) {
-    return Stark.prepareChunks(message, serializePath(path));
-  }
-
-  /**
-   * get version of Nano Starknet application
-   * @return an object with a major, minor, patch
-   */
-  async getAppVersion(): Promise<ResponseVersion> {
-    return getVersion(this.transport).catch((err) => processErrorResponse(err));
-  }
-
-  /**
-   * get information about Nano Starknet application
-   * @return an object with appName="STARKNET"
-   */
-  async getAppInfo(): Promise<ResponseAppInfo> {
-    return this.transport.send(CLA, INS.GET_APP_NAME, 0, 0).then((response) => {
-      const errorCodeData = response.subarray(-2);
-      const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
-
-      let appName = "undefined";
-
-      appName = response.subarray(0, 8).toString("ascii");
-      
-      return {
-        returnCode,
-        errorMessage: errorCodeToString(returnCode),
-        appName
-      };
-    }, processErrorResponse);
-  }
-
-  /**
-   * get Starknet public key derived from provided derivation path
-   * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
-   * @return an object with publicKey
-   * @example
-   * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
-   */
-  async getPubKey(path: string): Promise<ResponsePublicKey> {
-    const serializedPath = Buffer.from(serializePath(path));
-    return this.transport
-      .send(CLA, INS.GET_PUB_KEY, P1_VALUES.ONLY_RETRIEVE, 0, serializedPath, [
-        LedgerError.NoErrors,
-      ])
-      .then(processGetPubkeyResponse, processErrorResponse);
-  }
-
-  /**
-   * get and show Starknet public key derived from provided derivation path
-   * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
-   * @return an object with publicKey
-   * @example
-   * stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
-   */
-  async showPubKey(path: string): Promise<ResponsePublicKey> {
-    const serializedPath = Buffer.from(serializePath(path));
-    return this.transport
-      .send(
-        CLA,
-        INS.GET_PUB_KEY,
-        P1_VALUES.SHOW_ADDRESS_IN_DEVICE,
-        0,
-        serializedPath,
-        [LedgerError.NoErrors]
-      )
-      .then(processGetPubkeyResponse, processErrorResponse);
-  }
-
-  async sendChunk(
-    chunkIdx: number,
-    chunkNum: number,
-    chunk: Uint8Array,
+  async sendApdu(
     ins: number = INS.GET_APP_NAME,
     p1: number = 0x00,
-    p2: number = 0x00
-  ): Promise<ResponseSign> {
-
+    p2: number = 0x00,
+    data: Uint8Array = new Uint8Array(0)
+  ): Promise<ResponseGeneric> {
     return this.transport
-      .send(CLA, ins, p1, p2, Buffer.from(chunk), [
+      .send(CLA, ins, p1, p2, Buffer.from(data), [
         LedgerError.NoErrors,
         LedgerError.DataIsInvalid,
         LedgerError.BadKeyHandle,
@@ -213,83 +97,119 @@ export class Stark {
         const errorCodeData = response.subarray(-2);
         const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
         let errorMessage = errorCodeToString(returnCode);
-
-        if (
-          returnCode === LedgerError.BadKeyHandle ||
-          returnCode === LedgerError.DataIsInvalid ||
-          returnCode === LedgerError.SignVerifyError
-        ) {
-          errorMessage = `${errorMessage} : ${response
-            .subarray(0, response.length - 2)
-            .toString()}`;
-        }
-
-        if (returnCode === LedgerError.NoErrors && response.length > 2) {
-          return {
-            r: response.subarray(1, 1 + 32),
-            s: response.subarray(1 + 32, 1 + 32 + 32),
-            v: response[65],
-            returnCode: returnCode,
-            errorMessage: errorMessage,
-          };
-        }
-
         return {
+          data: response.subarray(0, -2),
           returnCode: returnCode,
           errorMessage: errorMessage,
+        };
+      });
+  }
+
+  /**
+   * get version of Nano Starknet application
+   * @return an object with a major, minor, patch
+   */
+  async getAppVersion(): Promise<ResponseVersion> {
+
+    const p = this.sendApdu(INS.GET_VERSION);
+    return p.then((response) => {
+      return {
+        returnCode: response.returnCode,
+        errorMessage: response.errorMessage,
+        major: response.data[0],
+        minor: response.data[1],
+        patch: response.data[2]
+      };
+    }, processErrorResponse);
+  }
+
+  /**
+   * get information about Nano Starknet application
+   * @return an object with appName="staRknet"
+   */
+  async getAppInfo(): Promise<ResponseAppInfo> {
+
+    return this.sendApdu(INS.GET_APP_NAME).then((response) => {
+
+      let appName = "undefined";
+
+      appName = Buffer.from(response.data.subarray(0, 8)).toString("ascii");
+      
+      return {
+        returnCode: response.returnCode,
+        errorMessage: response.errorMessage,
+        appName
+      };
+    }, processErrorResponse);
+  }
+
+  /**
+   * get staRknet public key derived from provided derivation path
+   * @param path a path in EIP-2645 format (https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md)
+   * @return an object with publicKey
+   * @example
+   * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
+   */
+  async getPubKey(path: string, show: boolean = true): Promise<ResponsePublicKey> {
+    const serializedPath = Buffer.from(serializePath(path));
+    return this.sendApdu( 
+        INS.GET_PUB_KEY, 
+        show ? 1 : 0,
+        0,
+        serializedPath)
+      .then(response => {
+        //get public key len (64)
+        const PKLEN = response.data[0];
+        const publicKey = response.data.slice(1, 1 + PKLEN);
+        return {
+          publicKey,
+          returnCode: response.returnCode,
+          errorMessage: response.errorMessage,
         };
       }, processErrorResponse);
   }
 
   /**
-   * sign the given hash over the Starknet elliptic curve
+   * sign the given hash over the staRknet elliptic curve
    * @param path Derivation path in EIP-2645 format
    * @param hash Pedersen hash to be signed
+   * @param show Show hash on device before signing (default = true)
    * @return an object with (r, s, v) signature
    */
-  async sign(path: string, hash: string, show = true): Promise<ResponseSign> {
+  async signHash(path: string, hash: string, show = true): Promise<ResponseSign> {
     
-    const felt = hexToBytes(fixHash(hash));
+    const serializedPath = serializePath(path);
+    const fixed_hash = hexToBytes(fixHash(hash));
 
-    return this.signGetChunks(path, felt).then((chunks) => {
-      return this.sendChunk(
-        0,
-        chunks.length,
-        chunks[0],
-        INS.SIGN,
-        PAYLOAD_TYPE.INIT,
-        show ? 1 : 0
-      ).then(async (response) => {
-
-        if (response.returnCode !== LedgerError.NoErrors) {
-          return response;
-        }
-
-        let result: ResponseSign = {
-          returnCode: LedgerError.ExecutionError,
-          errorMessage: "Execution Error",
+    return this.sendApdu(
+      INS.SIGN,
+      PAYLOAD_TYPE.INIT,
+      show ? 1 : 0,
+      serializedPath)
+    .then(response => {
+      if (response.returnCode !== LedgerError.NoErrors) {
+        return {
+          returnCode: response.returnCode,
+          errorMessage: response.errorMessage,
           r: new Uint8Array(0),
           s: new Uint8Array(0),
-          v: 0
-        };
-
-        for (let i = 1; i < chunks.length; i += 1) {
-          // eslint-disable-next-line no-await-in-loop
-          result = await this.sendChunk(
-            i,
-            chunks.length,
-            chunks[i],
-            INS.SIGN,
-            (i < chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST,
-            show ? 0x01 : 0x00
-          );
-
-          if (result.returnCode !== LedgerError.NoErrors) {
-            break;
-          }
+          v: 0  
         }
-        return result;
-      }, processErrorResponse);
+      }
+      return this.sendApdu(
+        INS.SIGN,
+        PAYLOAD_TYPE.LAST,
+        show ? 1 : 0,
+        fixed_hash)
+      .then(response => {
+        return {
+          returnCode: response.returnCode,
+          errorMessage: response.errorMessage,
+          r: response.data.subarray(1, 1 + 32),
+          s: response.data.subarray(1 + 32, 1 + 32 + 32),
+          v: response.data[65]
+        }
+      }, processErrorResponse)
     }, processErrorResponse);
   }
 
@@ -376,9 +296,15 @@ export class Stark {
       });
     }
 
-    return this.sendChunk(
-      0,
-      chunks.length,
+    return {
+      returnCode: LedgerError.ExecutionError,
+      errorMessage: "Execution Error",
+      r: new Uint8Array(0),
+      s: new Uint8Array(0),
+      v: 0
+    };
+
+    /*return this.sendApdu(
       chunks[0],
       INS.SIGN_TX,
       PAYLOAD_TYPE.INIT,
@@ -389,7 +315,7 @@ export class Stark {
         return response;
       }
 
-      let result: ResponseSign = {
+      let response: ResponseSign = {
         returnCode: LedgerError.ExecutionError,
         errorMessage: "Execution Error",
         r: new Uint8Array(0),
@@ -398,9 +324,7 @@ export class Stark {
       };
 
       for (let i = 1; i < chunks.length; i += 1) {
-        result = await this.sendChunk(
-          i,
-          chunks.length,
+        let result = await this.sendApdu(
           chunks[i],
           INS.SIGN_TX,
           i < (chunks.length - 1) ? PAYLOAD_TYPE.ADD:PAYLOAD_TYPE.LAST, 
@@ -412,8 +336,6 @@ export class Stark {
         }
       }
       return result;
-    }, processErrorResponse);
+    }, processErrorResponse);*/
   }
 }
-
-

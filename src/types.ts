@@ -5,6 +5,10 @@ export interface ResponseBase {
   returnCode: number;
 }
 
+export interface ResponseGeneric extends ResponseBase {
+  data: Uint8Array;
+}
+
 export interface ResponsePublicKey extends ResponseBase {
   publicKey: Uint8Array;
 }
