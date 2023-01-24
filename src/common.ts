@@ -1,12 +1,12 @@
 import Transport from "@ledgerhq/hw-transport";
+import { ResponseBase } from "./types";
 
 export const CLA = 0x5A;
 export const INS = {
   GET_VERSION: 0x00,
-  GET_APP_NAME: 0x01,
-  GET_PUB_KEY: 0x02,
-  SIGN: 0x03,
-  SIGN_TX: 0x04
+  GET_PUB_KEY: 0x01,
+  SIGN_HASH: 0x02,
+  SIGN_TX: 0x03
 };
 
 export const CHUNK_SIZE = 250;
@@ -69,7 +69,7 @@ function isDict(v: any) {
   );
 }
 
-export function processErrorResponse(response?: any) {
+export function processErrorResponse(response?: any): ResponseBase {
   if (response) {
     if (isDict(response)) {
       if (Object.prototype.hasOwnProperty.call(response, "statusCode")) {
@@ -87,7 +87,7 @@ export function processErrorResponse(response?: any) {
       }
     }
     return {
-      data: new Uint8Array(),
+      //data: new Uint8Array(),
       returnCode: 0xffff,
       errorMessage: response.toString(),
     };
