@@ -117,10 +117,6 @@ export class StarknetClient {
     };
   }
 
-  /**
-   * get information about Nano Starknet application
-   * @return an object with appName="staRknet"
-   */
   /*async getAppInfo(): Promise<ResponseAppInfo> {
 
     return this.sendApdu(INS.GET_APP_NAME).then((response) => {
@@ -230,11 +226,11 @@ export class StarknetClient {
   }
 
   /**
-   * sign the transaction (display Tx fields before signing)
+   * sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
    * @param path Derivation path in EIP-2645 format
-   * @param tx tx targeted contract
-   * @param txDetails account abstraction parameters
-   * @param abi target contract's abi
+   * @param calls List of calls [(to, entry_point, calldata), (), ...]
+   * @param tx Tx fields (account address, maxFee, nonce, version, chain ID)
+   * @param abi Targeted contract's abi (optional, for future use)
    * @return an object with (r, s, v) signature
    */
   async signTx(path: string, calls: Call[], tx: TxFields, abi?: Abi): Promise<ResponseSign> {

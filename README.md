@@ -20,13 +20,11 @@ Typescript host client used to interact with [Starknet Nano application](https:/
     *   [getAppVersion](#getappversion)
     *   [getPubKey](#getpubkey)
         *   [Parameters](#parameters-1)
-    *   [getPubKey](#getpubkey-1)
-        *   [Parameters](#parameters-2)
         *   [Examples](#examples-1)
     *   [signHash](#signhash)
-        *   [Parameters](#parameters-3)
+        *   [Parameters](#parameters-2)
     *   [signTx](#signtx)
-        *   [Parameters](#parameters-4)
+        *   [Parameters](#parameters-3)
 
 ### StarknetClient
 
@@ -48,17 +46,6 @@ const stark = new StarknetClient(transport)
 get version of Nano Starknet application
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseVersion>** an object with a major, minor, patch
-
-#### getPubKey
-
-get information about Nano Starknet application
-
-##### Parameters
-
-*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** 
-*   `show` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `true`)
-
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with appName="staRknet"
 
 #### getPubKey
 
@@ -91,14 +78,13 @@ Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/
 
 #### signTx
 
-sign the transaction (display Tx fields before signing)
+sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
-*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** 
-*   `tx` **TxFields** tx targeted contract
-*   `abi` **Abi?** target contract's abi
-*   `txDetails`  account abstraction parameters
+*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, entry_point, calldata), (), ...]
+*   `tx` **TxFields** Tx fields (account address, maxFee, nonce, version, chain ID)
+*   `abi` **Abi?** Targeted contract's abi (optional, for future use)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
