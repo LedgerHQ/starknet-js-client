@@ -2,14 +2,13 @@ const HARDENED = 0x80000000;
 
 export function serializePath(path: string): Uint8Array {
   
-  if (!path.startsWith("m")) {
-    throw new Error("Path should start with 'm' (e.g 'm/2645'/1195502025'/1148870696'/0'/0'/0')");
+  if (!path.startsWith("m/2645")) {
+    throw new Error("Path should start with 'm/2645' (e.g 'm/2645'/1195502025'/1148870696'/0'/0'/0')");
   }
 
   const pathArray = path.split("/");
 
-  const buf = new Uint8Array(1 + (pathArray.length - 1) * 4);
-  buf[0] = pathArray.length - 1; //first byte is the path length
+  const buf = new Uint8Array((pathArray.length - 1) * 4);
 
   const dataview = new DataView(buf.buffer);
 
@@ -35,7 +34,7 @@ export function serializePath(path: string): Uint8Array {
 
     value += childNumber;
 
-    dataview.setUint32(1 + 4 * (i - 1), value);
+    dataview.setUint32(4 * (i - 1), value);
   }
 
   return buf;

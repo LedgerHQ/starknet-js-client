@@ -1,6 +1,6 @@
-# HW-APP-STARKNET
+# STARKNET JS CLIENT
 
-Typescript host client used to interact with Starknet Nano application
+Typescript host client used to interact with [Starknet Nano application](https://github.com/LedgerHQ/nano-rapp-starknet)
 
 ## Usage
 
@@ -14,23 +14,19 @@ Typescript host client used to interact with Starknet Nano application
 
 #### Table of Contents
 
-*   [Stark](#stark)
+*   [StarknetClient](#starknetclient)
     *   [Parameters](#parameters)
     *   [Examples](#examples)
     *   [getAppVersion](#getappversion)
-    *   [getAppInfo](#getappinfo)
     *   [getPubKey](#getpubkey)
         *   [Parameters](#parameters-1)
         *   [Examples](#examples-1)
-    *   [showPubKey](#showpubkey)
+    *   [signHash](#signhash)
         *   [Parameters](#parameters-2)
-        *   [Examples](#examples-2)
-    *   [sign](#sign)
-        *   [Parameters](#parameters-3)
     *   [signTx](#signtx)
-        *   [Parameters](#parameters-4)
+        *   [Parameters](#parameters-3)
 
-### Stark
+### StarknetClient
 
 Starknet API
 
@@ -42,7 +38,7 @@ Starknet API
 
 ```javascript
 import Stark from "@ledgerhq/hw-app-starknet";
-const stark = new Stark(transport)
+const stark = new StarknetClient(transport)
 ```
 
 #### getAppVersion
@@ -51,19 +47,14 @@ get version of Nano Starknet application
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseVersion>** an object with a major, minor, patch
 
-#### getAppInfo
-
-get information about Nano Starknet application
-
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseAppInfo>** an object with appName="STARKNET"
-
 #### getPubKey
 
-get Starknet public key derived from provided derivation path
+get staRknet public key derived from provided derivation path
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format (<https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md>)
+*   `show` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `true`)
 
 ##### Examples
 
@@ -73,43 +64,27 @@ stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
 
-#### showPubKey
+#### signHash
 
-get and show Starknet public key derived from provided derivation path
-
-##### Parameters
-
-*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format (<https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md>)
-
-##### Examples
-
-```javascript
-stark.showPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
-```
-
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
-
-#### sign
-
-sign the given hash over the Starknet elliptic curve
+sign the given hash over the staRknet elliptic curve
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
-*   `show`   (optional, default `true`)
+*   `show`  Show hash on device before signing (default = true) (optional, default `true`)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
 
 #### signTx
 
-sign the transaction (display Tx fields before signing)
+sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
-*   `tx` **Call** tx targeted contract
-*   `txDetails` **CallDetails** account abstraction parameters
-*   `abi` **Abi?** target contract's abi
+*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, entry_point, calldata), (), ...]
+*   `tx` **TxFields** Tx fields (account address, maxFee, nonce, version, chain ID)
+*   `abi` **Abi?** Targeted contract's abi (optional, for future use)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature

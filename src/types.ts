@@ -5,6 +5,10 @@ export interface ResponseBase {
   returnCode: number;
 }
 
+export interface ResponseGeneric extends ResponseBase {
+  data: Uint8Array;
+}
+
 export interface ResponsePublicKey extends ResponseBase {
   publicKey: Uint8Array;
 }
@@ -33,17 +37,17 @@ export type CalldataMetadata = {
   //type: 'felt' | 'felt*' | string;
 }
 
-export type Calldata = {
-  contractAddress: string;
+export type Call = {
+  to: string;
   entrypoint: string;
-  calldata?: string[];
+  calldata: string[];
 };
 
-export type TxDetails = {
-  nonce?: BigNumberish;
-  maxFee?: BigNumberish;
-  version?: BigNumberish;
+export type TxFields = {
   accountAddress: string;
+  nonce: BigNumberish;
+  maxFee: BigNumberish;
+  version: BigNumberish;
   chainId: string;
 }
 

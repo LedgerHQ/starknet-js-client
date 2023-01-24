@@ -1,36 +1,23 @@
 import Transport from "@ledgerhq/hw-transport";
+import { ResponseBase } from "./types";
 
 export const CLA = 0x5A;
-export const CHUNK_SIZE = 250;
-
-export const HASH_MAX_LENGTH = 63;
-
 export const INS = {
   GET_VERSION: 0x00,
-  GET_APP_NAME: 0x01,
-  GET_PUB_KEY: 0x02,
-  SIGN: 0x03,
-  SIGN_TX: 0x04
+  GET_PUB_KEY: 0x01,
+  SIGN_HASH: 0x02,
+  SIGN_TX: 0x03
 };
 
+export const CHUNK_SIZE = 250;
+export const HASH_MAX_LENGTH = 63;
 export const PAYLOAD_TYPE = {
   INIT: 0x00,
   ADD: 0x01,
   LAST: 0x02,
 };
 
-export const P1_VALUES = {
-  ONLY_RETRIEVE: 0x00,
-  SHOW_ADDRESS_IN_DEVICE: 0x01,
-};
-
 export enum LedgerError {
-  U2FUnknown = 1,
-  U2FBadRequest = 2,
-  U2FConfigurationUnsupported = 3,
-  U2FDeviceIneligible = 4,
-  U2FTimeout = 5,
-  Timeout = 14,
   NoErrors = 0x9000,
   DeviceIsBusy = 0x9001,
   ErrorDerivingKeys = 0x6802,
@@ -50,12 +37,6 @@ export enum LedgerError {
 }
 
 export const ERROR_DESCRIPTION = {
-  [LedgerError.U2FUnknown]: "U2F: Unknown",
-  [LedgerError.U2FBadRequest]: "U2F: Bad request",
-  [LedgerError.U2FConfigurationUnsupported]: "U2F: Configuration unsupported",
-  [LedgerError.U2FDeviceIneligible]: "U2F: Device Ineligible",
-  [LedgerError.U2FTimeout]: "U2F: Timeout",
-  [LedgerError.Timeout]: "Timeout",
   [LedgerError.NoErrors]: "No errors",
   [LedgerError.DeviceIsBusy]: "Device is busy",
   [LedgerError.ErrorDerivingKeys]: "Error deriving keys",
@@ -88,7 +69,7 @@ function isDict(v: any) {
   );
 }
 
-export function processErrorResponse(response?: any) {
+export function processErrorResponse(response?: any): ResponseBase {
   if (response) {
     if (isDict(response)) {
       if (Object.prototype.hasOwnProperty.call(response, "statusCode")) {
@@ -106,6 +87,7 @@ export function processErrorResponse(response?: any) {
       }
     }
     return {
+      //data: new Uint8Array(),
       returnCode: 0xffff,
       errorMessage: response.toString(),
     };
@@ -115,20 +97,4 @@ export function processErrorResponse(response?: any) {
     returnCode: 0xffff,
     errorMessage: response.toString(),
   };
-}
-
-export async function getVersion(transport: Transport) {
-  return transport.send(CLA, INS.GET_VERSION, 0, 0).then((response) => {
-    const errorCodeData = response.slice(-2);
-    const returnCode = (errorCodeData[0] * 256 +
-      errorCodeData[1]) as LedgerError;
-
-    return {
-      returnCode,
-      errorMessage: errorCodeToString(returnCode),
-      major: response[0],
-      minor: response[1],
-      patch: response[2]
-    };
-  }, processErrorResponse);
 }
