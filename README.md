@@ -72,7 +72,7 @@ sign the given hash over the staRknet elliptic curve
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
-*   `show`  Show hash on device before signing (default = true) (optional, default `true`)
+*   `show`  Show hash on device before signing (optional, default `true`)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
 
