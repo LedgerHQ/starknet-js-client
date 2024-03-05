@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:yogh333/hw-app-starknet.git"
+    "url": "git@github.com:LedgerHQ/starknet-js-client"
   },
   "scripts": {
     "build": "tsc",
