@@ -152,9 +152,7 @@ export class StarknetClient {
         0,
         serializedPath);
         
-      //get public key len (64)
-      const PKLEN = response.data[0];
-      const publicKey = response.data.slice(1, 1 + PKLEN);
+      const publicKey = response.data.slice(1, 65);
       return {
         publicKey,
         returnCode: response.returnCode,
