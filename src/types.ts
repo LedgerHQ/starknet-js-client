@@ -13,6 +13,10 @@ export interface ResponsePublicKey extends ResponseBase {
   publicKey: Uint8Array;
 }
 
+export interface ResponseStarkKey extends ResponseBase {
+  starkKey: Uint8Array;
+}
+
 export interface ResponseVersion extends ResponseBase {
   major: number;
   minor: number;
@@ -33,9 +37,9 @@ export type BigNumberish = string | number | BN;
 
 export type CalldataMetadata = {
   name: string;
-  encoded: Uint8Array,
+  encoded: Uint8Array;
   //type: 'felt' | 'felt*' | string;
-}
+};
 
 export type Call = {
   to: string;
@@ -49,23 +53,23 @@ export type TxFields = {
   maxFee: BigNumberish;
   version: BigNumberish;
   chainId: string;
-}
+};
 
-export type AbiEntry = { name: string; type: 'felt' | 'felt*' | string };
+export type AbiEntry = { name: string; type: "felt" | "felt*" | string };
 
 export type FunctionAbi = {
   inputs: AbiEntry[];
   name: string;
   outputs: AbiEntry[];
-  stateMutability?: 'view';
-  type: 'function' | 'constructor';
+  stateMutability?: "view";
+  type: "function" | "constructor";
 };
 
 export type StructAbi = {
   members: (AbiEntry & { offset: number })[];
   name: string;
   size: number;
-  type: 'struct';
+  type: "struct";
 };
 
 export type Abi = Array<FunctionAbi | StructAbi>;
