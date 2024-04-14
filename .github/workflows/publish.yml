@@ -2,6 +2,9 @@ name: Publish Package to npmjs
 on:
   push:
     tags:
+      - '*.*.*'
+    tags-ignore:
+      - '2.1.0'
 jobs:
   build:
     runs-on: ubuntu-latest
