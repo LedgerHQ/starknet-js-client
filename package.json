@@ -12,6 +12,16 @@
   "main": "lib/stark.js",
   "module": "lib/stark.js",
   "types": "lib/stark.d.ts",
+  "exports": {
+    ".": {
+      "import": "./lib/stark.js",
+      "require": "./lib/stark.js",
+      "types": "./lib/stark.d.ts"
+    }
+  },
+  "files": [
+    "lib"
+  ],
   "publishConfig": {
     "access": "public"
   },
