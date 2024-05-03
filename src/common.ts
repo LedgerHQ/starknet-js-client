@@ -18,29 +18,35 @@ export const PAYLOAD_TYPE = {
 };
 
 export enum LedgerError {
-  NoErrors = 0x9000,
-  DeviceIsBusy = 0x9001,
+  NoError = 0x9000,
+  BadCla = 0x6e00,
+  BadIns = 0x6e01,
+  InvalidP1P2 = 0x6e02,
+  UserRejected = 0x6e04,
+  ExecutionError = 0x6f00,
+  /* To be cleaned ? */
+  /*DeviceIsBusy = 0x9001,
   ErrorDerivingKeys = 0x6802,
-  ExecutionError = 0x6400,
   WrongLength = 0x6700,
   EmptyBuffer = 0x6982,
   OutputBufferTooSmall = 0x6983,
   DataIsInvalid = 0x6984,
   ConditionsNotSatisfied = 0x6985,
-  TransactionRejected = 0x6986,
   BadKeyHandle = 0x6a80,
-  InvalidP1P2 = 0x6b00,
   InstructionNotSupported = 0x6d00,
-  AppDoesNotSeemToBeOpen = 0x6e00,
-  UnknownError = 0x6f00,
-  SignVerifyError = 0x6f01,
+  AppDoesNotSeemToBeOpen = 0x6e00,  
+  SignVerifyError = 0x6f01,*/
 }
 
 export const ERROR_DESCRIPTION = {
-  [LedgerError.NoErrors]: "No errors",
-  [LedgerError.DeviceIsBusy]: "Device is busy",
-  [LedgerError.ErrorDerivingKeys]: "Error deriving keys",
+  [LedgerError.NoError]: "No error",
+  [LedgerError.BadCla]: "Bad CLA",
+  [LedgerError.BadIns]: "Bad INS",
+  [LedgerError.InvalidP1P2]: "InvalidP1P2",
+  [LedgerError.UserRejected]: "Rejected by User",
   [LedgerError.ExecutionError]: "Execution Error",
+  /*[LedgerError.DeviceIsBusy]: "Device is busy",
+  [LedgerError.ErrorDerivingKeys]: "Error deriving keys",
   [LedgerError.WrongLength]: "Wrong Length",
   [LedgerError.EmptyBuffer]: "Empty Buffer",
   [LedgerError.OutputBufferTooSmall]: "Output buffer too small",
@@ -52,7 +58,7 @@ export const ERROR_DESCRIPTION = {
   [LedgerError.InstructionNotSupported]: "Instruction not supported",
   [LedgerError.AppDoesNotSeemToBeOpen]: "App does not seem to be open",
   [LedgerError.UnknownError]: "Unknown error",
-  [LedgerError.SignVerifyError]: "Sign/verify error",
+  [LedgerError.SignVerifyError]: "Sign/verify error",*/
 };
 
 export function errorCodeToString(statusCode: LedgerError) {

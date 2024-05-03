@@ -84,10 +84,11 @@ export class StarknetClient {
   ): Promise<ResponseGeneric> {
     return this.transport
       .send(CLA, ins, p1, p2, Buffer.from(data), [
-        LedgerError.NoErrors,
-        LedgerError.DataIsInvalid,
-        LedgerError.BadKeyHandle,
-        LedgerError.SignVerifyError
+        LedgerError.NoError,
+        LedgerError.BadCla,
+        LedgerError.BadIns,
+        LedgerError.InvalidP1P2,
+        LedgerError.UserRejected
       ])
       .then((response: Buffer) => {
         const errorCodeData = response.subarray(-2);
@@ -187,7 +188,7 @@ export class StarknetClient {
       show
     );
 
-    if (returnCode !== LedgerError.NoErrors) {
+    if (returnCode !== LedgerError.NoError) {
       return {
         starkKey: publicKey,
         returnCode,
@@ -232,7 +233,7 @@ export class StarknetClient {
         fixed_hash
       );
 
-      if (response.returnCode !== LedgerError.NoErrors) {
+      if (response.returnCode !== LedgerError.NoError) {
         return {
           returnCode: response.returnCode,
           errorMessage: errorCodeToString(response.returnCode),
@@ -351,7 +352,7 @@ export class StarknetClient {
     for (let i = 0; i < calldatas.length; i++) {
       response = await this.sendApdu(INS.SIGN_TX, 4, i, calldatas[i]);
     }
-    if (response?.returnCode === LedgerError.NoErrors) {
+    if (response?.returnCode === LedgerError.NoError) {
       return {
         returnCode: response.returnCode,
         errorMessage: response.errorMessage,
