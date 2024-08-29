@@ -84,7 +84,6 @@ sign a Starknet Invoke transaction (display some relevant Tx fields before signi
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, entry_point, calldata), (), ...]
-*   `tx` **TxFields** Tx fields (account address, maxFee, nonce, version, chain ID)
-*   `abi` **Abi?** Targeted contract's abi (optional, for future use)
+*   `tx` **TxFields** Tx fields (account address, tip, l1\_gas_bounds, l2\_gas_bounds, chainID, nonce, data_availability_mode)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature

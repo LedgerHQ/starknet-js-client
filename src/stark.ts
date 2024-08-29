@@ -265,15 +265,13 @@ export class StarknetClient {
    * sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
    * @param path Derivation path in EIP-2645 format
    * @param calls List of calls [(to, entry_point, calldata), (), ...]
-   * @param tx Tx fields (account address, maxFee, nonce, version, chain ID)
-   * @param abi Targeted contract's abi (optional, for future use)
+   * @param tx Tx fields (account address, tip, l1_gas_bounds, l2_gas_bounds, chainID, nonce, data_availability_mode)
    * @return an object with Tx hash + (r, s, v) signature
    */
   async signTx(
     path: string,
     calls: Call[],
-    tx: TxFields,
-    abi?: Abi
+    tx: TxFields
   ): Promise<ResponseTxSign> {
 
     /* APDU 0 is derivation path */
