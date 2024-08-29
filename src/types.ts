@@ -27,10 +27,16 @@ export interface ResponseAppInfo extends ResponseBase {
   appName: string;
 }
 
-export interface ResponseSign extends ResponseBase {
+export interface ResponseHashSign extends ResponseBase {
+  // Signature (r, s, v)
   r: Uint8Array;
   s: Uint8Array;
   v: number;
+}
+
+export interface ResponseTxSign extends ResponseHashSign {
+  // Tx hash
+  h: Uint8Array;
 }
 
 export type BigNumberish = string | number | BN;
@@ -43,16 +49,20 @@ export type CalldataMetadata = {
 
 export type Call = {
   to: string;
-  entrypoint: string;
+  selector: string;
   calldata: string[];
 };
 
 export type TxFields = {
   accountAddress: string;
-  nonce: BigNumberish;
-  maxFee: BigNumberish;
-  version: BigNumberish;
+  tip: BigNumberish;
+  l1_gas_bounds: string;
+  l2_gas_bounds: string;
+  paymaster_data: BigNumberish[];
   chainId: string;
+  nonce: BigNumberish;
+  data_availability_mode: BigNumberish;
+  account_deployment_data: BigNumberish[];
 };
 
 export type AbiEntry = { name: string; type: "felt" | "felt*" | string };

@@ -19,7 +19,8 @@ import Transport from "@ledgerhq/hw-transport";
 import { isHex, serializePath } from "./helper";
 import {
   ResponsePublicKey,
-  ResponseSign,
+  ResponseHashSign,
+  ResponseTxSign,
   ResponseVersion,
   ResponseGeneric,
   Call,
@@ -41,7 +42,6 @@ import BN from "bn.js";
 export { LedgerError };
 export * from "./types";
 
-/* see https://github.com/0xs34n/starknet.js/blob/develop/src/utils/ellipticCurve.ts#L29 */
 function fixHash(hash: string) {
   let fixed_hash = hash.replace(/^0x0*/, "");
   if (fixed_hash.length > HASH_MAX_LENGTH) {
@@ -49,7 +49,7 @@ function fixHash(hash: string) {
   }
   const s = "0".repeat(HASH_MAX_LENGTH - fixed_hash.length);
   fixed_hash = s.concat(fixed_hash);
-  return fixed_hash + "0";
+  return "0" + fixed_hash;
 }
 
 function hexToBytes(hex: string) {
@@ -214,7 +214,7 @@ export class StarknetClient {
     path: string,
     hash: string,
     show = true
-  ): Promise<ResponseSign> {
+  ): Promise<ResponseHashSign> {
     const serializedPath = serializePath(path);
     const fixed_hash = hexToBytes(fixHash(hash));
 
@@ -267,106 +267,150 @@ export class StarknetClient {
    * @param calls List of calls [(to, entry_point, calldata), (), ...]
    * @param tx Tx fields (account address, maxFee, nonce, version, chain ID)
    * @param abi Targeted contract's abi (optional, for future use)
-   * @return an object with (r, s, v) signature
+   * @return an object with Tx hash + (r, s, v) signature
    */
   async signTx(
     path: string,
     calls: Call[],
     tx: TxFields,
     abi?: Abi
-  ): Promise<ResponseSign> {
-    /* apdu 0 is derivation path */
+  ): Promise<ResponseTxSign> {
+
+    /* APDU 0 is derivation path */
     await this.sendApdu(INS.SIGN_TX, 0, 0, serializePath(path));
 
-    /* apdu 1 = accountAddress (32 bytes) + maxFee (32 bytes) + nonce (32 bytes) + version (32 bytes) + chain_id (32 bytes)= 160 bytes*/
+    /* APDU 1 =
+      accountAddress (32 bytes) +
+      tip (32 bytes) +
+      l1_gas_bounds (32 bytes) +
+      l2_gas_bounds (32 bytes) +
+      chain_id (32 bytes) +
+      nonce (32 bytes) +
+      data_availability_mode (32 bytes)
+    */
     const accountAddress = new BN(tx.accountAddress.replace(/^0x*/, ""), 16);
-    const maxFee = new BN(tx.maxFee as string, 10);
+    const tip = new BN(tx.tip as string, 10);
+    const l1_gas_bounds = new BN(tx.l1_gas_bounds.replace(/^0x*/, ""), 16);
+    const l2_gas_bounds = new BN(tx.l2_gas_bounds.replace(/^0x*/, ""), 16);
     const chain_id = new BN(tx.chainId.replace(/^0x*/, ""), 16);
     const nonce = new BN(tx.nonce as string, 10);
-    const version = new BN(tx.version as string, 10);
+    const data_availability_mode = new BN(tx.data_availability_mode as string, 10);
+
     let data = new Uint8Array([
       ...accountAddress.toArray("be", 32),
-      ...maxFee.toArray("be", 32),
+      ...tip.toArray("be", 32),
+      ...l1_gas_bounds.toArray("be", 32),
+      ...l2_gas_bounds.toArray("be", 32),
       ...chain_id.toArray("be", 32),
       ...nonce.toArray("be", 32),
-      ...version.toArray("be", 32)
+      ...data_availability_mode.toArray("be", 32)
     ]);
     await this.sendApdu(INS.SIGN_TX, 1, 0, data);
 
-    /* apdu 2 = call_array_len, calldata_len */
-    const callArrayLength = new BN(calls.length);
-    let length = 0;
-    calls.forEach(c => {
-      length += c.calldata.length;
-    });
-    const callDataLength = new BN(length);
-    data = new Uint8Array([
-      ...callArrayLength.toArray("be", 32),
-      ...callDataLength.toArray("be", 32)
-    ]);
-    await this.sendApdu(INS.SIGN_TX, 2, 0, data);
-
-    /* Callarray APDUs */
-    let offset = 0;
-    let callarrays = Array();
-    calls.forEach(call => {
-      const to = new BN(call.to.replace(/^0x*/, ""), 16);
-      const selectorLength = call.entrypoint.length;
-      const selector = Uint8Array.from(call.entrypoint, c => c.charCodeAt(0));
-      const dataOffset = new BN(offset);
-      const dataLen = new BN(call.calldata.length);
-
-      const data = new Uint8Array([
-        ...to.toArray("be", 32),
-        selectorLength,
-        ...selector,
-        ...dataOffset.toArray("be", 32),
-        ...dataLen.toArray("be", 32)
-      ]);
-      callarrays.push(data);
-      offset += call.calldata.length;
-    });
-    for (let i = 0; i < callarrays.length; i++) {
-      await this.sendApdu(INS.SIGN_TX, 3, i, callarrays[i]);
+    /* APDU 2 = paymaster data (*/
+    
+    /* slice data into chunks of 7 BigNumberish */
+    /*let datas = [];
+     for (let i = 0; i < tx.paymaster_data.length; i += 7) {
+      datas.push(tx.paymaster_data.slice(i, i + 7));
     }
-
-    /* Calldata APDUs */
-    let calldatas = Array();
-    calls.forEach(call => {
-      let chunk = new Uint8Array(call.calldata.length * 32);
-      call.calldata.forEach((s, idx) => {
-        let callData;
-        if (isHex(s)) {
-          callData = new BN(s.replace(/^0x*/, ""), 16);
-        } else {
-          callData = new BN(s, 10);
-        }
-        callData
-          .toArray("be", 32)
-          .forEach((byte, pos) => (chunk[32 * idx + pos] = byte));
+    for (const data of datas) {
+      let paymaster_data = new Uint8Array(7 * 32);
+      data.forEach((d, idx) => {
+        let val = new BN(d as string, 10);
+        val.toArray("be", 32).forEach((byte, pos) => (paymaster_data[32 * idx + pos] = byte));
       });
-      calldatas.push(chunk);
-    });
+      await this.sendApdu(INS.SIGN_TX, 2, 0, paymaster_data);
+    }*/
 
-    let response;
-    for (let i = 0; i < calldatas.length; i++) {
-      response = await this.sendApdu(INS.SIGN_TX, 4, i, calldatas[i]);
+    await this.sendApdu(INS.SIGN_TX, 2, 0, new Uint8Array(0));
+
+    /* APDU 3 = account deployment data */
+    /*let datas = [];
+     for (let i = 0; i < tx.account_deployment_data.length; i += 7) {
+      datas.push(tx.account_deployment_data.slice(i, i + 7));
     }
+    for (const data of datas) {
+      let account_deployment_data = new Uint8Array(7 * 32);
+      data.forEach((d, idx) => {
+        let val = new BN(d as string, 10);
+        val.toArray("be", 32).forEach((byte, pos) => (account_deployment_data[32 * idx + pos] = byte));
+      });
+      await this.sendApdu(INS.SIGN_TX, 3, 0, account_deployment_data);
+    }*/
+
+    await this.sendApdu(INS.SIGN_TX, 3, 0, new Uint8Array(0));
+
+    /* APDU 4 = Nb of calls */
+    let nb_calls = new BN(calls.length, 10);
+    data = new Uint8Array([...nb_calls.toArray("be", 32)]);
+    await this.sendApdu(INS.SIGN_TX, 4, 0, data);
+
+    /* APDU Calls */
+    let response;
+    let error: ResponseTxSign = {
+      returnCode: LedgerError.ExecutionError,
+      errorMessage: "Execution Error",
+      h: new Uint8Array(0),
+      r: new Uint8Array(0),
+      s: new Uint8Array(0),
+      v: 0
+    }
+    for (const call of calls) {
+
+      let data = new Uint8Array((2 + call.calldata.length) * 32);
+      
+      const to = new BN(call.to.replace(/^0x*/, ""), 16);
+      to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
+
+      const selector = new BN(call.selector.replace(/^0x*/, ""), 16);
+      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
+      
+      call.calldata.forEach((s, idx) => {
+        let val = new BN(s.replace(/^0x*/, ""), 16);
+        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+      });
+
+      /* slice data into chunks of 7 * 32 bytes */
+      let calldatas = [];
+      for (let i = 0; i < data.length; i += 7 * 32) {
+        calldatas.push(data.slice(i, i + 7 * 32));
+      }
+
+      if (calldatas.length > 1) {
+        response = await this.sendApdu(INS.SIGN_TX, 5, 0, calldatas[0]);
+        if (response.returnCode !== LedgerError.NoError) {
+          return error;
+        }
+        for (const calldata of calldatas.slice(1)) {
+          response = await this.sendApdu(INS.SIGN_TX, 5, 1, calldata);
+          if (response.returnCode !== LedgerError.NoError) {
+            return error;
+          }
+        }
+      } else {
+        response = await this.sendApdu(INS.SIGN_TX, 5, 0, calldatas[0]);
+        if (response.returnCode !== LedgerError.NoError) {
+          return error;
+        }
+      }
+      
+      response = await this.sendApdu(INS.SIGN_TX, 5, 2, new Uint8Array(0));
+      if (response.returnCode !== LedgerError.NoError) {
+        return error;
+      }
+    };
+
     if (response?.returnCode === LedgerError.NoError) {
       return {
         returnCode: response.returnCode,
         errorMessage: response.errorMessage,
-        r: response.data.subarray(1, 1 + 32),
-        s: response.data.subarray(1 + 32, 1 + 32 + 32),
-        v: response.data[65]
+        h: response.data.subarray(0, 32),
+        r: response.data.subarray(1 + 32, 1 + 32 + 32),
+        s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
+        v: response.data[97]
       };
     } else
-      return {
-        returnCode: LedgerError.ExecutionError,
-        errorMessage: "Execution Error",
-        r: new Uint8Array(0),
-        s: new Uint8Array(0),
-        v: 0
-      };
+      return error;
   }
 }

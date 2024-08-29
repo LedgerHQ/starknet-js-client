@@ -18,7 +18,7 @@ Typescript host client used to interact with [Starknet Nano application](https:/
     *   [Parameters](#parameters)
     *   [Examples](#examples)
     *   [getAppVersion](#getappversion)
-    *   [getPubKey](#getpubkey)
+    *   [getStarkKey](#getstarkkey)
         *   [Parameters](#parameters-1)
         *   [Examples](#examples-1)
     *   [signHash](#signhash)
@@ -47,9 +47,9 @@ get version of Nano Starknet application
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseVersion>** an object with a major, minor, patch
 
-#### getPubKey
+#### getStarkKey
 
-get staRknet public key derived from provided derivation path
+get stark key derived from provided derivation path
 
 ##### Parameters
 
@@ -62,7 +62,7 @@ get staRknet public key derived from provided derivation path
 stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
 ```
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseStarkKey>** an object with publicKey
 
 #### signHash
 
@@ -72,9 +72,9 @@ sign the given hash over the staRknet elliptic curve
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
-*   `show`  Show hash on device before signing (optional, default `true`)
+*   `show`  Show hash on device before signing (default = true) (optional, default `true`)
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseHashSign>** an object with (r, s, v) signature
 
 #### signTx
 
@@ -87,4 +87,4 @@ sign a Starknet Invoke transaction (display some relevant Tx fields before signi
 *   `tx` **TxFields** Tx fields (account address, maxFee, nonce, version, chain ID)
 *   `abi` **Abi?** Targeted contract's abi (optional, for future use)
 
-Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseSign>** an object with (r, s, v) signature
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
