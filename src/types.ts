@@ -41,12 +41,6 @@ export interface ResponseTxSign extends ResponseHashSign {
 
 export type BigNumberish = string | number | BN;
 
-export type CalldataMetadata = {
-  name: string;
-  encoded: Uint8Array;
-  //type: 'felt' | 'felt*' | string;
-};
-
 export type Call = {
   to: string;
   selector: string;
@@ -64,6 +58,13 @@ export type TxFields = {
   data_availability_mode: BigNumberish;
   account_deployment_data: BigNumberish[];
 };
+
+export type TxV1Fields = {
+  accountAddress: string;
+  max_fee: BigNumberish;
+  chainId: string;
+  nonce: BigNumberish;
+}
 
 export type AbiEntry = { name: string; type: "felt" | "felt*" | string };
 
