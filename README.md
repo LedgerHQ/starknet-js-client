@@ -18,13 +18,20 @@ Typescript host client used to interact with [Starknet Nano application](https:/
     *   [Parameters](#parameters)
     *   [Examples](#examples)
     *   [getAppVersion](#getappversion)
-    *   [getStarkKey](#getstarkkey)
+    *   [getPubKey](#getpubkey)
         *   [Parameters](#parameters-1)
         *   [Examples](#examples-1)
-    *   [signHash](#signhash)
+    *   [getStarkKey](#getstarkkey)
         *   [Parameters](#parameters-2)
-    *   [signTx](#signtx)
+        *   [Examples](#examples-2)
+    *   [signHash](#signhash)
         *   [Parameters](#parameters-3)
+    *   [signTx](#signtx)
+        *   [Parameters](#parameters-4)
+    *   [signTxV1](#signtxv1)
+        *   [Parameters](#parameters-5)
+    *   [signMessage](#signmessage)
+        *   [Parameters](#parameters-6)
 
 ### StarknetClient
 
@@ -46,6 +53,23 @@ const stark = new StarknetClient(transport)
 get version of Nano Starknet application
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseVersion>** an object with a major, minor, patch
+
+#### getPubKey
+
+get full starknet public key derived from provided derivation path
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** a path in EIP-2645 format (<https://github.com/ethereum/EIPs/blob/master/EIPS/eip-2645.md>)
+*   `show` **[boolean](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean)**  (optional, default `true`)
+
+##### Examples
+
+```javascript
+stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
+```
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponsePublicKey>** an object with publicKey
 
 #### getStarkKey
 
@@ -72,18 +96,41 @@ sign the given hash over the staRknet elliptic curve
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `hash` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Pedersen hash to be signed
-*   `show`  Show hash on device before signing (default = true) (optional, default `true`)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseHashSign>** an object with (r, s, v) signature
 
 #### signTx
 
-sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
+sign a Starknet Tx v3 Invoke transaction
 
 ##### Parameters
 
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
-*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, entry_point, calldata), (), ...]
+*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, selector, calldata), (), ...]
 *   `tx` **TxFields** Tx fields (account address, tip, l1\_gas_bounds, l2\_gas_bounds, chainID, nonce, data_availability_mode)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
+
+#### signTxV1
+
+sign a Starknet Tx v1 Invoke transaction
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, selector, calldata), (), ...]
+*   `tx` **TxV1Fields** Tx fields (account address, max_fee, chainID, nonce)
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
+
+#### signMessage
+
+sign a SNIP-12 encoded message
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `message` **TypedData** message to be signed
+*   `account` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** accound address to sign the message
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseHashSign>** an object with (r, s, v) signature

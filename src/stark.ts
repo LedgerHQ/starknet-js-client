@@ -193,7 +193,6 @@ export class StarknetClient {
    * sign the given hash over the staRknet elliptic curve
    * @param path Derivation path in EIP-2645 format
    * @param hash Pedersen hash to be signed
-   * @param show Show hash on device before signing (default = true)
    * @return an object with (r, s, v) signature
    */
   async signHash(
