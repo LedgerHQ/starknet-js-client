@@ -9,9 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ledgerhq/hw-app-starknet": "^2.1.1",
     "@ledgerhq/hw-transport-http": "^6.29.6",
     "@ledgerhq/hw-transport-node-hid": "^6.28.6",
-    "@ledgerhq/hw-transport-node-speculos": "^6.28.6"
+    "@ledgerhq/hw-transport-node-speculos": "^6.28.6",
+    "starknet": "^6.11.0"
   }
 }

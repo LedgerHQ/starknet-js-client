@@ -6,16 +6,12 @@ export const INS = {
   GET_VERSION: 0x00,
   GET_PUB_KEY: 0x01,
   SIGN_HASH: 0x02,
-  SIGN_TX: 0x03
+  SIGN_TX: 0x03,
+  SIGN_TX_V1: 0x04,
 };
 
 export const CHUNK_SIZE = 250;
 export const HASH_MAX_LENGTH = 63;
-export const PAYLOAD_TYPE = {
-  INIT: 0x00,
-  ADD: 0x01,
-  LAST: 0x02,
-};
 
 export enum LedgerError {
   NoError = 0x9000,

@@ -25,7 +25,7 @@ import {
   ResponseGeneric,
   Call,
   TxFields,
-  Abi,
+  TxV1Fields,
   ResponseStarkKey
 } from "./types";
 import {
@@ -33,23 +33,26 @@ import {
   CLA,
   errorCodeToString,
   INS,
-  LedgerError,
-  PAYLOAD_TYPE
+  LedgerError
 } from "./common";
+
+import { TypedData, typedData} from 'starknet';
 
 import BN from "bn.js";
 
 export { LedgerError };
 export * from "./types";
 
-function fixHash(hash: string) {
-  let fixed_hash = hash.replace(/^0x0*/, "");
-  if (fixed_hash.length > HASH_MAX_LENGTH) {
+function padHash(hash: string) {
+  let p_hash = hash.replace(/^0x0*/, "");
+  // check hash length is 63 (252 bits) max
+  if (p_hash.length > HASH_MAX_LENGTH) {
     throw "invalid hash length";
   }
-  const s = "0".repeat(HASH_MAX_LENGTH - fixed_hash.length);
-  fixed_hash = s.concat(fixed_hash);
-  return "0" + fixed_hash;
+  // pad left with 0 to 64 hex digits (32 bytes)
+  const s = "0".repeat(1 + HASH_MAX_LENGTH - p_hash.length);
+  p_hash = s.concat(p_hash);
+  return p_hash;
 }
 
 function hexToBytes(hex: string) {
@@ -116,23 +119,6 @@ export class StarknetClient {
       patch: response.data[2]
     };
   }
-
-  /*async getAppInfo(): Promise<ResponseAppInfo> {
-
-    return this.sendApdu(INS.GET_APP_NAME).then((response) => {
-
-      let appName = "undefined";
-
-      appName = Buffer.from(response.data.subarray(0, 8)).toString("ascii");
-      
-      return {
-        returnCode: response.returnCode,
-        errorMessage: response.errorMessage,
-        appName
-      };
-    }, processErrorResponse);
-  }
-  
 
   /**
    * get full starknet public key derived from provided derivation path
@@ -212,25 +198,24 @@ export class StarknetClient {
    */
   async signHash(
     path: string,
-    hash: string,
-    show = true
+    hash: string
   ): Promise<ResponseHashSign> {
     const serializedPath = serializePath(path);
-    const fixed_hash = hexToBytes(fixHash(hash));
+    const padded_hash = hexToBytes(padHash(hash));
 
     try {
       let response = await this.sendApdu(
         INS.SIGN_HASH,
-        PAYLOAD_TYPE.INIT,
-        show ? 1 : 0,
+        0,
+        0,
         serializedPath
       );
 
       response = await this.sendApdu(
         INS.SIGN_HASH,
-        PAYLOAD_TYPE.LAST,
-        show ? 1 : 0,
-        fixed_hash
+        1,
+        0,
+        padded_hash
       );
 
       if (response.returnCode !== LedgerError.NoError) {
@@ -262,9 +247,9 @@ export class StarknetClient {
   }
 
   /**
-   * sign a Starknet Invoke transaction (display some relevant Tx fields before signing)
+   * sign a Starknet Tx v3 Invoke transaction
    * @param path Derivation path in EIP-2645 format
-   * @param calls List of calls [(to, entry_point, calldata), (), ...]
+   * @param calls List of calls [(to, selector, calldata), (), ...]
    * @param tx Tx fields (account address, tip, l1_gas_bounds, l2_gas_bounds, chainID, nonce, data_availability_mode)
    * @return an object with Tx hash + (r, s, v) signature
    */
@@ -411,4 +396,134 @@ export class StarknetClient {
     } else
       return error;
   }
+
+  /**
+  * sign a Starknet Tx v1 Invoke transaction
+  * @param path Derivation path in EIP-2645 format
+  * @param calls List of calls [(to, selector, calldata), (), ...]
+  * @param tx Tx fields (account address, max_fee, chainID, nonce)
+  * @return an object with Tx hash + (r, s, v) signature
+  */
+  async signTxV1(
+    path: string,
+    calls: Call[],
+    tx: TxV1Fields
+  ): Promise<ResponseTxSign> {
+
+    /* APDU 0 is derivation path */
+    await this.sendApdu(INS.SIGN_TX_V1, 0, 0, serializePath(path));
+
+    /* APDU 1 =
+      accountAddress (32 bytes) +
+      max_fee (32 bytes) +
+      chain_id (32 bytes) +
+      nonce (32 bytes) 
+    */
+    const accountAddress = new BN(tx.accountAddress.replace(/^0x*/, ""), 16);
+    const max_fee = new BN(tx.max_fee as string, 10);
+    const chain_id = new BN(tx.chainId.replace(/^0x*/, ""), 16);
+    const nonce = new BN(tx.nonce as string, 10);
+
+    let data = new Uint8Array([
+      ...accountAddress.toArray("be", 32),
+      ...max_fee.toArray("be", 32),
+      ...chain_id.toArray("be", 32),
+      ...nonce.toArray("be", 32)
+    ]);
+    await this.sendApdu(INS.SIGN_TX_V1, 1, 0, data);
+
+    /* APDU 2 = Nb of calls */
+    let nb_calls = new BN(calls.length, 10);
+    data = new Uint8Array([...nb_calls.toArray("be", 32)]);
+    await this.sendApdu(INS.SIGN_TX_V1, 2, 0, data);
+
+    /* APDU Calls */
+    let response;
+    let error: ResponseTxSign = {
+      returnCode: LedgerError.ExecutionError,
+      errorMessage: "Execution Error",
+      h: new Uint8Array(0),
+      r: new Uint8Array(0),
+      s: new Uint8Array(0),
+      v: 0
+    }
+
+    for (const call of calls) {
+
+      let data = new Uint8Array((2 + call.calldata.length) * 32);
+      
+      const to = new BN(call.to.replace(/^0x*/, ""), 16);
+      to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
+
+      const selector = new BN(call.selector.replace(/^0x*/, ""), 16);
+      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
+      
+      call.calldata.forEach((s, idx) => {
+        let val = new BN(s.replace(/^0x*/, ""), 16);
+        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+      });
+
+      /* slice data into chunks of 7 * 32 bytes */
+      let calldatas = [];
+      for (let i = 0; i < data.length; i += 7 * 32) {
+        calldatas.push(data.slice(i, i + 7 * 32));
+      }
+
+      if (calldatas.length > 1) {
+        response = await this.sendApdu(INS.SIGN_TX_V1, 3, 0, calldatas[0]);
+        if (response.returnCode !== LedgerError.NoError) {
+          return error;
+        }
+        for (const calldata of calldatas.slice(1)) {
+          response = await this.sendApdu(INS.SIGN_TX_V1, 3, 1, calldata);
+          if (response.returnCode !== LedgerError.NoError) {
+            return error;
+          }
+        }
+      } else {
+        response = await this.sendApdu(INS.SIGN_TX_V1, 3, 0, calldatas[0]);
+        if (response.returnCode !== LedgerError.NoError) {
+          return error;
+        }
+      }
+      
+      response = await this.sendApdu(INS.SIGN_TX_V1, 3, 2, new Uint8Array(0));
+      if (response.returnCode !== LedgerError.NoError) {
+        return error;
+      }
+    };
+
+    if (response?.returnCode === LedgerError.NoError) {
+      return {
+        returnCode: response.returnCode,
+        errorMessage: response.errorMessage,
+        h: response.data.subarray(0, 32),
+        r: response.data.subarray(1 + 32, 1 + 32 + 32),
+        s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
+        v: response.data[97]
+      };
+    } else
+      return error;
+  }
+
+  /**
+  * sign a SNIP-12 encoded message
+  * @param path Derivation path in EIP-2645 format
+  * @param message message to be signed
+  * @param account accound address to sign the message
+  * @return an object with (r, s, v) signature
+  */
+  async signMessage(
+    path: string,
+    message: TypedData,
+    account: string
+  ): Promise<ResponseHashSign> {
+
+    const hashed_data = typedData.getMessageHash(message, account);
+
+    return this.signHash(path, hashed_data);
+  }
 }
+
+
+
