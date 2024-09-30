@@ -35,7 +35,15 @@ import {
   LedgerError
 } from "./common";
 
-import { Call, CallData, encode, num, TypedData, typedData } from "starknet";
+import {
+  BigNumberish,
+  Call,
+  CallData,
+  encode,
+  num,
+  TypedData,
+  typedData
+} from "starknet";
 
 import BN from "bn.js";
 
@@ -255,15 +263,14 @@ export class StarknetClient {
       nonce (32 bytes) +
       data_availability_mode (32 bytes)
     */
-    const accountAddress = new BN(tx.accountAddress.replace(/^0x*/, ""), 16);
-    const tip = new BN(tx.tip as string, 10);
-    const l1_gas_bounds = new BN(tx.l1_gas_bounds.replace(/^0x*/, ""), 16);
-    const l2_gas_bounds = new BN(tx.l2_gas_bounds.replace(/^0x*/, ""), 16);
-    const chain_id = new BN(tx.chainId.replace(/^0x*/, ""), 16);
-    const nonce = new BN(tx.nonce as string, 10);
-    const data_availability_mode = new BN(
-      tx.data_availability_mode as string,
-      10
+    const accountAddress = this.sanitizeHexBN(tx.accountAddress);
+    const tip = this.sanitizeHexBN(tx.tip);
+    const l1_gas_bounds = this.sanitizeHexBN(tx.l1_gas_bounds);
+    const l2_gas_bounds = this.sanitizeHexBN(tx.l2_gas_bounds);
+    const chain_id = this.sanitizeHexBN(tx.chainId);
+    const nonce = this.sanitizeHexBN(tx.nonce);
+    const data_availability_mode = this.sanitizeHexBN(
+      tx.data_availability_mode
     );
 
     let data = new Uint8Array([
@@ -330,16 +337,16 @@ export class StarknetClient {
       const compiledCalldata = CallData.toCalldata(call.calldata);
       let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
-      const to = new BN(call.contractAddress.replace(/^0x*/, ""), 16);
+      const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = new BN(call.entrypoint.replace(/^0x*/, ""), 16);
+      const selector = this.sanitizeHexBN(call.entrypoint);
       selector
         .toArray("be", 32)
         .forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = new BN(encode.removeHexPrefix(num.toHex(s)), 16);
+        let val = this.sanitizeHexBN(s);
         val
           .toArray("be", 32)
           .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
@@ -408,9 +415,9 @@ export class StarknetClient {
       chain_id (32 bytes) +
       nonce (32 bytes) 
     */
-    const accountAddress = new BN(tx.accountAddress.replace(/^0x*/, ""), 16);
+    const accountAddress = this.sanitizeHexBN(tx.accountAddress);
     const max_fee = new BN(tx.max_fee as string, 10);
-    const chain_id = new BN(tx.chainId.replace(/^0x*/, ""), 16);
+    const chain_id = this.sanitizeHexBN(tx.chainId);
     const nonce = new BN(tx.nonce as string, 10);
 
     let data = new Uint8Array([
@@ -439,20 +446,19 @@ export class StarknetClient {
 
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
-      console.log("🚀 ~ StarknetClient ~ compiledCalldata:", compiledCalldata);
 
       let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
-      const to = new BN(call.contractAddress.replace(/^0x*/, ""), 16);
+      const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = new BN(call.entrypoint.replace(/^0x*/, ""), 16);
+      const selector = this.sanitizeHexBN(call.entrypoint);
       selector
         .toArray("be", 32)
         .forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = new BN(encode.removeHexPrefix(num.toHex(s)), 16);
+        let val = this.sanitizeHexBN(s);
         val
           .toArray("be", 32)
           .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
@@ -515,5 +521,9 @@ export class StarknetClient {
     const hashed_data = typedData.getMessageHash(message, account);
 
     return this.signHash(path, hashed_data);
+  }
+
+  private sanitizeHexBN(v: BigNumberish): BN {
+    return new BN(encode.removeHexPrefix(num.toHex(v)), 16);
   }
 }
