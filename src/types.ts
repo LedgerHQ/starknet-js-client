@@ -39,14 +39,6 @@ export interface ResponseTxSign extends ResponseHashSign {
   h: Uint8Array;
 }
 
-// export type BigNumberish = string | number | BN;
-
-// export type Call = {
-//   to: string;
-//   selector: string;
-//   calldata: string[];
-// };
-
 export type TxFields = {
   accountAddress: string;
   tip: BigNumberish;
