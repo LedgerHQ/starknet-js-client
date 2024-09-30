@@ -35,7 +35,7 @@ import {
   LedgerError
 } from "./common";
 
-import { Call, CallData, TypedData, typedData } from "starknet";
+import { Call, CallData, encode, num, TypedData, typedData } from "starknet";
 
 import BN from "bn.js";
 
@@ -339,7 +339,7 @@ export class StarknetClient {
         .forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = new BN(s.replace(/^0x*/, ""), 16);
+        let val = new BN(encode.removeHexPrefix(num.toHex(s)), 16);
         val
           .toArray("be", 32)
           .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
@@ -439,6 +439,7 @@ export class StarknetClient {
 
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
+      console.log("🚀 ~ StarknetClient ~ compiledCalldata:", compiledCalldata);
 
       let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
@@ -451,7 +452,7 @@ export class StarknetClient {
         .forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = new BN(s.replace(/^0x*/, ""), 16);
+        let val = new BN(encode.removeHexPrefix(num.toHex(s)), 16);
         val
           .toArray("be", 32)
           .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
