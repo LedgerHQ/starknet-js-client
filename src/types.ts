@@ -1,4 +1,4 @@
-import BN from "bn.js";
+import { BigNumberish } from "starknet";
 
 export interface ResponseBase {
   errorMessage: string;
@@ -39,13 +39,13 @@ export interface ResponseTxSign extends ResponseHashSign {
   h: Uint8Array;
 }
 
-export type BigNumberish = string | number | BN;
+// export type BigNumberish = string | number | BN;
 
-export type Call = {
-  to: string;
-  selector: string;
-  calldata: string[];
-};
+// export type Call = {
+//   to: string;
+//   selector: string;
+//   calldata: string[];
+// };
 
 export type TxFields = {
   accountAddress: string;
@@ -64,7 +64,7 @@ export type TxV1Fields = {
   max_fee: BigNumberish;
   chainId: string;
   nonce: BigNumberish;
-}
+};
 
 export type AbiEntry = { name: string; type: "felt" | "felt*" | string };
 

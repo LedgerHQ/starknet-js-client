@@ -23,7 +23,6 @@ import {
   ResponseTxSign,
   ResponseVersion,
   ResponseGeneric,
-  Call,
   TxFields,
   TxV1Fields,
   ResponseStarkKey
@@ -36,7 +35,7 @@ import {
   LedgerError
 } from "./common";
 
-import { TypedData, typedData} from 'starknet';
+import { Call, CallData, TypedData, typedData } from "starknet";
 
 import BN from "bn.js";
 
@@ -195,27 +194,14 @@ export class StarknetClient {
    * @param hash Pedersen hash to be signed
    * @return an object with (r, s, v) signature
    */
-  async signHash(
-    path: string,
-    hash: string
-  ): Promise<ResponseHashSign> {
+  async signHash(path: string, hash: string): Promise<ResponseHashSign> {
     const serializedPath = serializePath(path);
     const padded_hash = hexToBytes(padHash(hash));
 
     try {
-      let response = await this.sendApdu(
-        INS.SIGN_HASH,
-        0,
-        0,
-        serializedPath
-      );
+      let response = await this.sendApdu(INS.SIGN_HASH, 0, 0, serializedPath);
 
-      response = await this.sendApdu(
-        INS.SIGN_HASH,
-        1,
-        0,
-        padded_hash
-      );
+      response = await this.sendApdu(INS.SIGN_HASH, 1, 0, padded_hash);
 
       if (response.returnCode !== LedgerError.NoError) {
         return {
@@ -257,7 +243,6 @@ export class StarknetClient {
     calls: Call[],
     tx: TxFields
   ): Promise<ResponseTxSign> {
-
     /* APDU 0 is derivation path */
     await this.sendApdu(INS.SIGN_TX, 0, 0, serializePath(path));
 
@@ -276,7 +261,10 @@ export class StarknetClient {
     const l2_gas_bounds = new BN(tx.l2_gas_bounds.replace(/^0x*/, ""), 16);
     const chain_id = new BN(tx.chainId.replace(/^0x*/, ""), 16);
     const nonce = new BN(tx.nonce as string, 10);
-    const data_availability_mode = new BN(tx.data_availability_mode as string, 10);
+    const data_availability_mode = new BN(
+      tx.data_availability_mode as string,
+      10
+    );
 
     let data = new Uint8Array([
       ...accountAddress.toArray("be", 32),
@@ -290,7 +278,7 @@ export class StarknetClient {
     await this.sendApdu(INS.SIGN_TX, 1, 0, data);
 
     /* APDU 2 = paymaster data (*/
-    
+
     /* slice data into chunks of 7 BigNumberish */
     /*let datas = [];
      for (let i = 0; i < tx.paymaster_data.length; i += 7) {
@@ -337,20 +325,24 @@ export class StarknetClient {
       r: new Uint8Array(0),
       s: new Uint8Array(0),
       v: 0
-    }
+    };
     for (const call of calls) {
+      const compiledCalldata = CallData.toCalldata(call.calldata);
+      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
-      let data = new Uint8Array((2 + call.calldata.length) * 32);
-      
-      const to = new BN(call.to.replace(/^0x*/, ""), 16);
+      const to = new BN(call.contractAddress.replace(/^0x*/, ""), 16);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = new BN(call.selector.replace(/^0x*/, ""), 16);
-      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
-      
-      call.calldata.forEach((s, idx) => {
+      const selector = new BN(call.entrypoint.replace(/^0x*/, ""), 16);
+      selector
+        .toArray("be", 32)
+        .forEach((byte, pos) => (data[32 + pos] = byte));
+
+      compiledCalldata.forEach((s, idx) => {
         let val = new BN(s.replace(/^0x*/, ""), 16);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val
+          .toArray("be", 32)
+          .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -376,12 +368,12 @@ export class StarknetClient {
           return error;
         }
       }
-      
+
       response = await this.sendApdu(INS.SIGN_TX, 5, 2, new Uint8Array(0));
       if (response.returnCode !== LedgerError.NoError) {
         return error;
       }
-    };
+    }
 
     if (response?.returnCode === LedgerError.NoError) {
       return {
@@ -392,23 +384,21 @@ export class StarknetClient {
         s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
         v: response.data[97]
       };
-    } else
-      return error;
+    } else return error;
   }
 
   /**
-  * sign a Starknet Tx v1 Invoke transaction
-  * @param path Derivation path in EIP-2645 format
-  * @param calls List of calls [(to, selector, calldata), (), ...]
-  * @param tx Tx fields (account address, max_fee, chainID, nonce)
-  * @return an object with Tx hash + (r, s, v) signature
-  */
+   * sign a Starknet Tx v1 Invoke transaction
+   * @param path Derivation path in EIP-2645 format
+   * @param calls List of calls [(to, selector, calldata), (), ...]
+   * @param tx Tx fields (account address, max_fee, chainID, nonce)
+   * @return an object with Tx hash + (r, s, v) signature
+   */
   async signTxV1(
     path: string,
     calls: Call[],
     tx: TxV1Fields
   ): Promise<ResponseTxSign> {
-
     /* APDU 0 is derivation path */
     await this.sendApdu(INS.SIGN_TX_V1, 0, 0, serializePath(path));
 
@@ -445,21 +435,26 @@ export class StarknetClient {
       r: new Uint8Array(0),
       s: new Uint8Array(0),
       v: 0
-    }
+    };
 
     for (const call of calls) {
+      const compiledCalldata = CallData.toCalldata(call.calldata);
 
-      let data = new Uint8Array((2 + call.calldata.length) * 32);
-      
-      const to = new BN(call.to.replace(/^0x*/, ""), 16);
+      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
+
+      const to = new BN(call.contractAddress.replace(/^0x*/, ""), 16);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = new BN(call.selector.replace(/^0x*/, ""), 16);
-      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
-      
-      call.calldata.forEach((s, idx) => {
+      const selector = new BN(call.entrypoint.replace(/^0x*/, ""), 16);
+      selector
+        .toArray("be", 32)
+        .forEach((byte, pos) => (data[32 + pos] = byte));
+
+      compiledCalldata.forEach((s, idx) => {
         let val = new BN(s.replace(/^0x*/, ""), 16);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val
+          .toArray("be", 32)
+          .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -485,12 +480,12 @@ export class StarknetClient {
           return error;
         }
       }
-      
+
       response = await this.sendApdu(INS.SIGN_TX_V1, 3, 2, new Uint8Array(0));
       if (response.returnCode !== LedgerError.NoError) {
         return error;
       }
-    };
+    }
 
     if (response?.returnCode === LedgerError.NoError) {
       return {
@@ -501,28 +496,23 @@ export class StarknetClient {
         s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
         v: response.data[97]
       };
-    } else
-      return error;
+    } else return error;
   }
 
   /**
-  * sign a SNIP-12 encoded message
-  * @param path Derivation path in EIP-2645 format
-  * @param message message to be signed
-  * @param account accound address to sign the message
-  * @return an object with (r, s, v) signature
-  */
+   * sign a SNIP-12 encoded message
+   * @param path Derivation path in EIP-2645 format
+   * @param message message to be signed
+   * @param account accound address to sign the message
+   * @return an object with (r, s, v) signature
+   */
   async signMessage(
     path: string,
     message: TypedData,
     account: string
   ): Promise<ResponseHashSign> {
-
     const hashed_data = typedData.getMessageHash(message, account);
 
     return this.signHash(path, hashed_data);
   }
 }
-
-
-
