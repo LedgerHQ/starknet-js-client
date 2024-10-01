@@ -1,4 +1,5 @@
-import BN from "bn.js";
+import { BigNumberish } from "starknet";
+import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export interface ResponseBase {
   errorMessage: string;
@@ -39,23 +40,15 @@ export interface ResponseTxSign extends ResponseHashSign {
   h: Uint8Array;
 }
 
-export type BigNumberish = string | number | BN;
-
-export type Call = {
-  to: string;
-  selector: string;
-  calldata: string[];
-};
-
 export type TxFields = {
   accountAddress: string;
   tip: BigNumberish;
-  l1_gas_bounds: string;
-  l2_gas_bounds: string;
+  resourceBounds: ResourceBounds;
   paymaster_data: BigNumberish[];
   chainId: string;
   nonce: BigNumberish;
-  data_availability_mode: BigNumberish;
+  nonceDataAvailabilityMode: EDataAvailabilityMode;
+  feeDataAvailabilityMode: EDataAvailabilityMode;
   account_deployment_data: BigNumberish[];
 };
 
@@ -64,7 +57,7 @@ export type TxV1Fields = {
   max_fee: BigNumberish;
   chainId: string;
   nonce: BigNumberish;
-}
+};
 
 export type AbiEntry = { name: string; type: "felt" | "felt*" | string };
 
