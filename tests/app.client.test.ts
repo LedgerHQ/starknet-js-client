@@ -173,14 +173,21 @@ test("sign Tx", async () => {
     accountAddress:
       "0x07e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a",
     tip: 0,
-    l1_gas_bounds:
-      "0x00004C315F474153000000000000000000000000000000000000000000000000",
-    l2_gas_bounds:
-      "0x00004C325F474153000000000000000000000000000000000000000000000000",
+    resourceBounds: {
+      l1_gas: {
+        max_amount: "0x3ad",
+        max_price_per_unit: "0x5cff80d86108b"
+      },
+      l2_gas: {
+        max_amount: "0x0",
+        max_price_per_unit: "0x0"
+      }
+    },
     paymaster_data: [],
     chainId: "0x534e5f4d41494e",
     nonce: 1,
-    data_availability_mode: 0,
+    nonceDataAvailabilityMode: "L1",
+    feeDataAvailabilityMode: "L1",
     account_deployment_data: []
   };
 
@@ -188,8 +195,7 @@ test("sign Tx", async () => {
     {
       contractAddress:
         "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-      entrypoint:
-        "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
+      entrypoint: "swap",
       calldata: [
         "0x07e00d496e324876bbc8531f2d9a82bf154d1a04a50218ee74cdd372f75a551a",
         "0x00000000000000000000000000000000000000000000000000000000000003e8"
@@ -249,8 +255,7 @@ test("sign TxV1", async () => {
     {
       contractAddress:
         "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-      entrypoint:
-        "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
+      entrypoint: "transfer",
       calldata: [
         "0x11f5fc2a92ac03434a7937fe982f5e5293b65ad438a989c5b78fb8f04a12016",
         "0x9184e72a000",
