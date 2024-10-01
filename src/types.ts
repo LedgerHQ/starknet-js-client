@@ -1,4 +1,5 @@
 import { BigNumberish } from "starknet";
+import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export interface ResponseBase {
   errorMessage: string;
@@ -42,12 +43,12 @@ export interface ResponseTxSign extends ResponseHashSign {
 export type TxFields = {
   accountAddress: string;
   tip: BigNumberish;
-  l1_gas_bounds: string;
-  l2_gas_bounds: string;
+  resourceBounds: ResourceBounds;
   paymaster_data: BigNumberish[];
   chainId: string;
   nonce: BigNumberish;
-  data_availability_mode: BigNumberish;
+  nonceDataAvailabilityMode: EDataAvailabilityMode;
+  feeDataAvailabilityMode: EDataAvailabilityMode;
   account_deployment_data: BigNumberish[];
 };
 

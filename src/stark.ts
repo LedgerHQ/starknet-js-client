@@ -40,12 +40,15 @@ import {
   Call,
   CallData,
   encode,
+  hash,
   num,
+  shortString,
   TypedData,
   typedData
 } from "starknet";
 
 import BN from "bn.js";
+import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export { LedgerError };
 export * from "./types";
@@ -265,19 +268,21 @@ export class StarknetClient {
     */
     const accountAddress = this.sanitizeHexBN(tx.accountAddress);
     const tip = this.sanitizeHexBN(tx.tip);
-    const l1_gas_bounds = this.sanitizeHexBN(tx.l1_gas_bounds);
-    const l2_gas_bounds = this.sanitizeHexBN(tx.l2_gas_bounds);
     const chain_id = this.sanitizeHexBN(tx.chainId);
     const nonce = this.sanitizeHexBN(tx.nonce);
     const data_availability_mode = this.sanitizeHexBN(
-      tx.data_availability_mode
+      this.encodeDataAvailabilityMode(
+        tx.nonceDataAvailabilityMode,
+        tx.feeDataAvailabilityMode
+      )
     );
+    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
 
     let data = new Uint8Array([
       ...accountAddress.toArray("be", 32),
       ...tip.toArray("be", 32),
-      ...l1_gas_bounds.toArray("be", 32),
-      ...l2_gas_bounds.toArray("be", 32),
+      ...l1_gas.toArray("be", 32),
+      ...l2_gas.toArray("be", 32),
       ...chain_id.toArray("be", 32),
       ...nonce.toArray("be", 32),
       ...data_availability_mode.toArray("be", 32)
@@ -340,7 +345,9 @@ export class StarknetClient {
       const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(call.entrypoint);
+      const selector = this.sanitizeHexBN(
+        hash.getSelectorFromName(call.entrypoint)
+      );
       selector
         .toArray("be", 32)
         .forEach((byte, pos) => (data[32 + pos] = byte));
@@ -452,7 +459,9 @@ export class StarknetClient {
       const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(call.entrypoint);
+      const selector = this.sanitizeHexBN(
+        hash.getSelectorFromName(call.entrypoint)
+      );
       selector
         .toArray("be", 32)
         .forEach((byte, pos) => (data[32 + pos] = byte));
@@ -524,6 +533,43 @@ export class StarknetClient {
   }
 
   private sanitizeHexBN(v: BigNumberish): BN {
-    return new BN(encode.removeHexPrefix(num.toHex(v)), 16);
+    const hexified = typeof v === "string" && num.isHex(v) ? v : num.toHex(v);
+    return new BN(encode.removeHexPrefix(hexified), 16);
+  }
+
+  private encodeResourceBounds(bounds: ResourceBounds) {
+    const MAX_AMOUNT_BITS = BigInt(64);
+    const MAX_PRICE_PER_UNIT_BITS = BigInt(128);
+    const RESOURCE_VALUE_OFFSET = MAX_AMOUNT_BITS + MAX_PRICE_PER_UNIT_BITS;
+    const L1_GAS_NAME = BigInt(shortString.encodeShortString("L1_GAS"));
+    const L2_GAS_NAME = BigInt(shortString.encodeShortString("L2_GAS"));
+
+    const L1Bound =
+      (L1_GAS_NAME << RESOURCE_VALUE_OFFSET) +
+      (BigInt(bounds.l1_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
+      BigInt(bounds.l1_gas.max_price_per_unit);
+
+    const L2Bound =
+      (L2_GAS_NAME << RESOURCE_VALUE_OFFSET) +
+      (BigInt(bounds.l2_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
+      BigInt(bounds.l2_gas.max_price_per_unit);
+
+    return {
+      l1_gas: this.sanitizeHexBN(L1Bound),
+      l2_gas: this.sanitizeHexBN(L2Bound)
+    };
+  }
+
+  private encodeDataAvailabilityMode(
+    nonceDAM: EDataAvailabilityMode,
+    feeDAM: EDataAvailabilityMode
+  ) {
+    const DATA_AVAILABILITY_MODE_BITS = BigInt(32);
+    const nonceIntDAM = nonceDAM === EDataAvailabilityMode.L1 ? 0 : 1;
+    const feeIntDAM = feeDAM === EDataAvailabilityMode.L1 ? 0 : 1;
+
+    return (
+      (BigInt(nonceIntDAM) << DATA_AVAILABILITY_MODE_BITS) + BigInt(feeIntDAM)
+    );
   }
 }
