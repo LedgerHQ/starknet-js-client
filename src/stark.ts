@@ -16,7 +16,7 @@
  *  limitations under the License.
  ********************************************************************************/
 import Transport from "@ledgerhq/hw-transport";
-import { isHex, serializePath } from "./helper";
+import { serializePath } from "./helper";
 import {
   ResponsePublicKey,
   ResponseHashSign,
