@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@ledgerhq/hw-app-starknet':
-        specifier: ^2.3.1
-        version: 2.3.1
       '@ledgerhq/hw-transport-http':
         specifier: ^6.29.6
         version: 6.30.4
@@ -31,9 +28,6 @@ packages:
 
   '@ledgerhq/errors@6.19.1':
     resolution: {integrity: sha512-75yK7Nnit/Gp7gdrJAz0ipp31CCgncRp+evWt6QawQEtQKYEDfGo10QywgrrBBixeRxwnMy1DP6g2oCWRf1bjw==}
-
-  '@ledgerhq/hw-app-starknet@2.3.1':
-    resolution: {integrity: sha512-cacnWJLjbjVdHUp3+ayLLRbdcEYw1KeZkuj5DQ0neeMdkv7kPfiBXr1lpGEP+894ksa5RIGz1W9K7qy6BhwLkw==}
 
   '@ledgerhq/hw-transport-http@6.30.4':
     resolution: {integrity: sha512-1dF/mZQWsh9jms9gMOfl2VZHa12+j6qvBrztpDXwPh/IDsKnt4zq/ePwfS7tJrkO8c4rCTyA9TA/qrnNC1gWFw==}
@@ -80,12 +74,6 @@ packages:
   '@starknet-io/types-js@0.7.7':
     resolution: {integrity: sha512-WLrpK7LIaIb8Ymxu6KF/6JkGW1sso988DweWu7p5QY/3y7waBIiPvzh27D9bX5KIJNRDyOoOVoHVEKYUYWZ/RQ==}
 
-  '@types/bn.js@5.1.6':
-    resolution: {integrity: sha512-Xh8vSwUeMKeYYrj3cX4lGQgFSF/N03r+tv4AiLl1SucqV+uTQpxRcnM8AkXKHwYP9ZPXOYXRr2KPXpVlIvqh9w==}
-
-  '@types/node@22.7.4':
-    resolution: {integrity: sha512-y+NPi1rFzDs1NdQHHToqeiX2TIS79SWEAw9GYhkkx8bD0ChpfqC+n2j5OXOCpzfojBEBt6DnEnnG9MY0zk1XLg==}
-
   '@types/w3c-web-usb@1.0.10':
     resolution: {integrity: sha512-CHgUI5kTc/QLMP8hODUHhge0D4vx+9UiAwIGiT0sTy/B2XpdX1U5rJt6JSISgr6ikRT7vxV9EVAFeYZqUnl1gQ==}
 
@@ -118,9 +106,6 @@ packages:
 
   bl@4.1.0:
     resolution: {integrity: sha512-1W07cM9gS6DcLperZfFSj+bWLtaPGSOHWhPiGzXmvVJbRLdG82sH/Kn8EtW1VqWVA54AKf2h5k5BbnIbwF3h6w==}
-
-  bn.js@5.2.1:
-    resolution: {integrity: sha512-eXRvHzWyYPBuB4NBy0cmYQjGitUrtqwbvlzP3G6VFnNRbsZQIxQ10PbKKHt8gZ/HW/D/747aDl+QkDqg3KQLMQ==}
 
   buffer@5.7.1:
     resolution: {integrity: sha512-EHcyIPBQ4BSGlvjB16k5KgAJ27CIsHY/2JBmCRReo48y9rQ3MaUzWX3KVlBa4U7MyX02HdVj0K7C3WaB3ju7FQ==}
@@ -405,9 +390,6 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  undici-types@6.19.8:
-    resolution: {integrity: sha512-ve2KP6f/JnbPBFyobGHuerC9g1FYGn/F8n1LWTwNxCEzd6IfqTwUQcNXgEtmmQ6DlRrC1hrSrBnCZPokRrDHjw==}
-
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
     engines: {node: '>= 4.0.0'}
@@ -480,15 +462,6 @@ snapshots:
 
   '@ledgerhq/errors@6.19.1': {}
 
-  '@ledgerhq/hw-app-starknet@2.3.1':
-    dependencies:
-      '@ledgerhq/hw-transport': 6.31.4
-      '@types/bn.js': 5.1.6
-      bn.js: 5.2.1
-      starknet: 6.11.0
-    transitivePeerDependencies:
-      - encoding
-
   '@ledgerhq/hw-transport-http@6.30.4':
     dependencies:
       '@ledgerhq/errors': 6.19.1
@@ -559,14 +532,6 @@ snapshots:
 
   '@starknet-io/types-js@0.7.7': {}
 
-  '@types/bn.js@5.1.6':
-    dependencies:
-      '@types/node': 22.7.4
-
-  '@types/node@22.7.4':
-    dependencies:
-      undici-types: 6.19.8
-
   '@types/w3c-web-usb@1.0.10': {}
 
   abi-wan-kanabi@2.2.3:
@@ -605,8 +570,6 @@ snapshots:
       buffer: 5.7.1
       inherits: 2.0.4
       readable-stream: 3.6.2
-
-  bn.js@5.2.1: {}
 
   buffer@5.7.1:
     dependencies:
@@ -890,8 +853,6 @@ snapshots:
   tunnel-agent@0.6.0:
     dependencies:
       safe-buffer: 5.2.1
-
-  undici-types@6.19.8: {}
 
   universalify@0.2.0: {}
 

@@ -11,7 +11,7 @@ export default defineConfig({
     },
 
     rollupOptions: {
-      external: ["isomorphic-fetch"],
+      external: ["starknet"],
       output: [
         {
           format: "es",
