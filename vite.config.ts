@@ -7,7 +7,7 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "hw-app-starknet",
-      fileName: format => `hw-app-starknet.${format}.js`
+      fileName: (format) => `hw-app-starknet.${format}.js`,
     },
 
     rollupOptions: {
@@ -18,17 +18,17 @@ export default defineConfig({
           entryFileNames: "[name].js",
           preserveModules: true,
           dir: "lib/esm",
-          preserveModulesRoot: "src"
+          preserveModulesRoot: "src",
         },
         {
           format: "cjs",
           entryFileNames: "[name].cjs",
           preserveModules: true,
           dir: "lib/cjs",
-          preserveModulesRoot: "src"
-        }
-      ]
-    }
+          preserveModulesRoot: "src",
+        },
+      ],
+    },
   },
-  plugins: [dts({ outDir: "lib/types" })]
+  plugins: [dts({ outDir: "lib/types" })],
 });

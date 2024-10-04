@@ -25,15 +25,9 @@ import {
   ResponseGeneric,
   TxFields,
   TxV1Fields,
-  ResponseStarkKey
+  ResponseStarkKey,
 } from "./types";
-import {
-  HASH_MAX_LENGTH,
-  CLA,
-  errorCodeToString,
-  INS,
-  LedgerError
-} from "./common";
+import { HASH_MAX_LENGTH, CLA, errorCodeToString, INS, LedgerError } from "./common";
 
 import {
   BigNumberish,
@@ -44,7 +38,7 @@ import {
   num,
   shortString,
   TypedData,
-  typedData
+  typedData,
 } from "starknet";
 
 import BN from "bn.js";
@@ -67,8 +61,7 @@ function padHash(hash: string) {
 
 function hexToBytes(hex: string) {
   const bytes: number[] = [];
-  for (let c = 0; c < hex.length; c += 2)
-    bytes.push(parseInt(hex.substring(c, c + 2), 16));
+  for (let c = 0; c < hex.length; c += 2) bytes.push(parseInt(hex.substring(c, c + 2), 16));
   return Uint8Array.from(bytes);
 }
 
@@ -101,7 +94,7 @@ export class StarknetClient {
         LedgerError.BadCla,
         LedgerError.BadIns,
         LedgerError.InvalidP1P2,
-        LedgerError.UserRejected
+        LedgerError.UserRejected,
       ])
       .then((response: Buffer) => {
         const errorCodeData = response.subarray(-2);
@@ -110,7 +103,7 @@ export class StarknetClient {
         return {
           data: response.subarray(0, -2),
           returnCode: returnCode,
-          errorMessage: errorMessage
+          errorMessage: errorMessage,
         };
       });
   }
@@ -126,7 +119,7 @@ export class StarknetClient {
       errorMessage: response.errorMessage,
       major: response.data[0],
       minor: response.data[1],
-      patch: response.data[2]
+      patch: response.data[2],
     };
   }
 
@@ -137,33 +130,25 @@ export class StarknetClient {
    * @example
    * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async getPubKey(
-    path: string,
-    show: boolean = true
-  ): Promise<ResponsePublicKey> {
+  async getPubKey(path: string, show: boolean = true): Promise<ResponsePublicKey> {
     const serializedPath = serializePath(path);
 
     try {
-      const response = await this.sendApdu(
-        INS.GET_PUB_KEY,
-        show ? 0x01 : 0x00,
-        0,
-        serializedPath
-      );
+      const response = await this.sendApdu(INS.GET_PUB_KEY, show ? 0x01 : 0x00, 0, serializedPath);
 
       const publicKey = response.data.slice(1, 65);
 
       return {
         publicKey,
         returnCode: response.returnCode,
-        errorMessage: response.errorMessage
+        errorMessage: response.errorMessage,
       };
     } catch (e) {
       console.warn("Caught error");
       return {
         publicKey: new Uint8Array(0),
         returnCode: LedgerError.ExecutionError,
-        errorMessage: errorCodeToString(LedgerError.ExecutionError)
+        errorMessage: errorCodeToString(LedgerError.ExecutionError),
       };
     }
   }
@@ -175,27 +160,21 @@ export class StarknetClient {
    * @example
    * stark.getPubKey("m/2645'/579218131'/0'/0'").then(o => o.publicKey)
    */
-  async getStarkKey(
-    path: string,
-    show: boolean = true
-  ): Promise<ResponseStarkKey> {
-    const { publicKey, errorMessage, returnCode } = await this.getPubKey(
-      path,
-      show
-    );
+  async getStarkKey(path: string, show: boolean = true): Promise<ResponseStarkKey> {
+    const { publicKey, errorMessage, returnCode } = await this.getPubKey(path, show);
 
     if (returnCode !== LedgerError.NoError) {
       return {
         starkKey: publicKey,
         returnCode,
-        errorMessage
+        errorMessage,
       };
     }
 
     return {
       starkKey: publicKey.slice(0, 32),
       returnCode,
-      errorMessage
+      errorMessage,
     };
   }
 
@@ -220,7 +199,7 @@ export class StarknetClient {
           errorMessage: errorCodeToString(response.returnCode),
           r: new Uint8Array(0),
           s: new Uint8Array(0),
-          v: 0
+          v: 0,
         };
       } else {
         return {
@@ -228,7 +207,7 @@ export class StarknetClient {
           errorMessage: response.errorMessage,
           r: response.data.subarray(1, 1 + 32),
           s: response.data.subarray(1 + 32, 1 + 32 + 32),
-          v: response.data[65]
+          v: response.data[65],
         };
       }
     } catch (e) {
@@ -237,7 +216,7 @@ export class StarknetClient {
         errorMessage: errorCodeToString(LedgerError.ExecutionError),
         r: new Uint8Array(0),
         s: new Uint8Array(0),
-        v: 0
+        v: 0,
       };
     }
   }
@@ -249,11 +228,7 @@ export class StarknetClient {
    * @param tx Tx fields (account address, tip, l1_gas_bounds, l2_gas_bounds, chainID, nonce, data_availability_mode)
    * @return an object with Tx hash + (r, s, v) signature
    */
-  async signTx(
-    path: string,
-    calls: Call[],
-    tx: TxFields
-  ): Promise<ResponseTxSign> {
+  async signTx(path: string, calls: Call[], tx: TxFields): Promise<ResponseTxSign> {
     /* APDU 0 is derivation path */
     await this.sendApdu(INS.SIGN_TX, 0, 0, serializePath(path));
 
@@ -271,10 +246,7 @@ export class StarknetClient {
     const chain_id = this.sanitizeHexBN(tx.chainId);
     const nonce = this.sanitizeHexBN(tx.nonce);
     const data_availability_mode = this.sanitizeHexBN(
-      this.encodeDataAvailabilityMode(
-        tx.nonceDataAvailabilityMode,
-        tx.feeDataAvailabilityMode
-      )
+      this.encodeDataAvailabilityMode(tx.nonceDataAvailabilityMode, tx.feeDataAvailabilityMode)
     );
     const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
 
@@ -285,7 +257,7 @@ export class StarknetClient {
       ...l2_gas.toArray("be", 32),
       ...chain_id.toArray("be", 32),
       ...nonce.toArray("be", 32),
-      ...data_availability_mode.toArray("be", 32)
+      ...data_availability_mode.toArray("be", 32),
     ]);
     await this.sendApdu(INS.SIGN_TX, 1, 0, data);
 
@@ -336,7 +308,7 @@ export class StarknetClient {
       h: new Uint8Array(0),
       r: new Uint8Array(0),
       s: new Uint8Array(0),
-      v: 0
+      v: 0,
     };
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
@@ -345,18 +317,12 @@ export class StarknetClient {
       const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(
-        hash.getSelectorFromName(call.entrypoint)
-      );
-      selector
-        .toArray("be", 32)
-        .forEach((byte, pos) => (data[32 + pos] = byte));
+      const selector = this.sanitizeHexBN(hash.getSelectorFromName(call.entrypoint));
+      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
         let val = this.sanitizeHexBN(s);
-        val
-          .toArray("be", 32)
-          .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -396,7 +362,7 @@ export class StarknetClient {
         h: response.data.subarray(0, 32),
         r: response.data.subarray(1 + 32, 1 + 32 + 32),
         s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
-        v: response.data[97]
+        v: response.data[97],
       };
     } else return error;
   }
@@ -408,11 +374,7 @@ export class StarknetClient {
    * @param tx Tx fields (account address, max_fee, chainID, nonce)
    * @return an object with Tx hash + (r, s, v) signature
    */
-  async signTxV1(
-    path: string,
-    calls: Call[],
-    tx: TxV1Fields
-  ): Promise<ResponseTxSign> {
+  async signTxV1(path: string, calls: Call[], tx: TxV1Fields): Promise<ResponseTxSign> {
     /* APDU 0 is derivation path */
     await this.sendApdu(INS.SIGN_TX_V1, 0, 0, serializePath(path));
 
@@ -431,7 +393,7 @@ export class StarknetClient {
       ...accountAddress.toArray("be", 32),
       ...max_fee.toArray("be", 32),
       ...chain_id.toArray("be", 32),
-      ...nonce.toArray("be", 32)
+      ...nonce.toArray("be", 32),
     ]);
     await this.sendApdu(INS.SIGN_TX_V1, 1, 0, data);
 
@@ -448,7 +410,7 @@ export class StarknetClient {
       h: new Uint8Array(0),
       r: new Uint8Array(0),
       s: new Uint8Array(0),
-      v: 0
+      v: 0,
     };
 
     for (const call of calls) {
@@ -459,18 +421,12 @@ export class StarknetClient {
       const to = this.sanitizeHexBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(
-        hash.getSelectorFromName(call.entrypoint)
-      );
-      selector
-        .toArray("be", 32)
-        .forEach((byte, pos) => (data[32 + pos] = byte));
+      const selector = this.sanitizeHexBN(hash.getSelectorFromName(call.entrypoint));
+      selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
         let val = this.sanitizeHexBN(s);
-        val
-          .toArray("be", 32)
-          .forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -510,7 +466,7 @@ export class StarknetClient {
         h: response.data.subarray(0, 32),
         r: response.data.subarray(1 + 32, 1 + 32 + 32),
         s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
-        v: response.data[97]
+        v: response.data[97],
       };
     } else return error;
   }
@@ -522,11 +478,7 @@ export class StarknetClient {
    * @param account accound address to sign the message
    * @return an object with (r, s, v) signature
    */
-  async signMessage(
-    path: string,
-    message: TypedData,
-    account: string
-  ): Promise<ResponseHashSign> {
+  async signMessage(path: string, message: TypedData, account: string): Promise<ResponseHashSign> {
     const hashed_data = typedData.getMessageHash(message, account);
 
     return this.signHash(path, hashed_data);
@@ -556,7 +508,7 @@ export class StarknetClient {
 
     return {
       l1_gas: this.sanitizeHexBN(L1Bound),
-      l2_gas: this.sanitizeHexBN(L2Bound)
+      l2_gas: this.sanitizeHexBN(L2Bound),
     };
   }
 
@@ -568,8 +520,6 @@ export class StarknetClient {
     const nonceIntDAM = nonceDAM === EDataAvailabilityMode.L1 ? 0 : 1;
     const feeIntDAM = feeDAM === EDataAvailabilityMode.L1 ? 0 : 1;
 
-    return (
-      (BigInt(nonceIntDAM) << DATA_AVAILABILITY_MODE_BITS) + BigInt(feeIntDAM)
-    );
+    return (BigInt(nonceIntDAM) << DATA_AVAILABILITY_MODE_BITS) + BigInt(feeIntDAM);
   }
 }

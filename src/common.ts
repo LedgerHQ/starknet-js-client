@@ -6,7 +6,7 @@ export const INS = {
   GET_PUB_KEY: 0x01,
   SIGN_HASH: 0x02,
   SIGN_TX: 0x03,
-  SIGN_TX_V1: 0x04
+  SIGN_TX_V1: 0x04,
 };
 
 export const CHUNK_SIZE = 250;
@@ -18,7 +18,7 @@ export enum LedgerError {
   BadIns = 0x6e01,
   InvalidP1P2 = 0x6e02,
   UserRejected = 0x6e04,
-  ExecutionError = 0x6f00
+  ExecutionError = 0x6f00,
   /* To be cleaned ? */
   /*DeviceIsBusy = 0x9001,
   ErrorDerivingKeys = 0x6802,
@@ -39,7 +39,7 @@ export const ERROR_DESCRIPTION = {
   [LedgerError.BadIns]: "Bad INS",
   [LedgerError.InvalidP1P2]: "InvalidP1P2",
   [LedgerError.UserRejected]: "Rejected by User",
-  [LedgerError.ExecutionError]: "Execution Error"
+  [LedgerError.ExecutionError]: "Execution Error",
   /*[LedgerError.DeviceIsBusy]: "Device is busy",
   [LedgerError.ErrorDerivingKeys]: "Error deriving keys",
   [LedgerError.WrongLength]: "Wrong Length",
@@ -62,12 +62,7 @@ export function errorCodeToString(statusCode: LedgerError) {
 }
 
 function isDict(v: any) {
-  return (
-    typeof v === "object" &&
-    v !== null &&
-    !(v instanceof Array) &&
-    !(v instanceof Date)
-  );
+  return typeof v === "object" && v !== null && !(v instanceof Array) && !(v instanceof Date);
 }
 
 export function processErrorResponse(response?: any): ResponseBase {
@@ -76,7 +71,7 @@ export function processErrorResponse(response?: any): ResponseBase {
       if (Object.prototype.hasOwnProperty.call(response, "statusCode")) {
         return {
           returnCode: response.statusCode,
-          errorMessage: errorCodeToString(response.statusCode)
+          errorMessage: errorCodeToString(response.statusCode),
         };
       }
 
@@ -90,12 +85,12 @@ export function processErrorResponse(response?: any): ResponseBase {
     return {
       //data: new Uint8Array(),
       returnCode: 0xffff,
-      errorMessage: response.toString()
+      errorMessage: response.toString(),
     };
   }
 
   return {
     returnCode: 0xffff,
-    errorMessage: response.toString()
+    errorMessage: response.toString(),
   };
 }
