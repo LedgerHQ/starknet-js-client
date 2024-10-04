@@ -4,6 +4,19 @@
  */
 
 export default {
+  preset: "ts-jest",
+  testEnvironment: "node",
+  testMatch: ["<rootDir>/tests/**/*.test.ts"],
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
+  transform: {
+    "^.+\\.tsx?$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.json",
+        useESM: true,
+      },
+    ],
+  },
   // All imported modules in your tests should be mocked automatically
   // automock: false,
 
