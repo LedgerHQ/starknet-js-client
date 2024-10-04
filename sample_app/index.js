@@ -1,8 +1,7 @@
-const SpeculosTransport = require("@ledgerhq/hw-transport-node-speculos").default;
-//const TransportNodeHid = require("@ledgerhq/hw-transport-node-hid").default;
+//const SpeculosTransport = require("@ledgerhq/hw-transport-node-speculos").default;
+const TransportNodeHid = require("@ledgerhq/hw-transport-node-hid").default;
 
 const { StarknetClient } = require("../");
-//const { StarknetClient } = require("@ledgerhq/hw-app-starknet");
 
 const { shortString } = require("starknet");
 
@@ -10,8 +9,8 @@ const apduPort = 9999;
 
 async function main() {
 
-    const transport = await SpeculosTransport.open({ apduPort });
-	//const transport = await TransportNodeHid.create();
+    //const transport = await SpeculosTransport.open({ apduPort });
+	const transport = await TransportNodeHid.create();
 
 	const stark = new StarknetClient(transport);
 
@@ -36,14 +35,14 @@ async function main() {
 	}
 	
 	let calls = [
-		{ 
-			to: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
-			selector: "0x83afd3f4caedc6eebf44246fe54e38c95e3179a5ec9ea81740eca5b482d12e",
-			calldata: ["0x11f5fc2a92ac03434a7937fe982f5e5293b65ad438a989c5b78fb8f04a12016",
-					"0x9184e72a000",
-					"0x0"]
-		},     
-	]
+        {
+            contractAddress: "0x049d36570d4e46f48e99674bd3fcc84644ddd6b96f7c741b1562b82f9e004dc7",
+            entrypoint: "transfer",
+            calldata: ["0x11f5fc2a92ac03434a7937fe982f5e5293b65ad438a989c5b78fb8f04a12016",
+                "0x9184e72a000",
+                "0x0"]
+        },
+    ]
 
 	signature = await stark.signTxV1("m/2645'/1195502025'/1148870696'/0'/0'/0", calls, txDetails);
 	console.log(signature);
