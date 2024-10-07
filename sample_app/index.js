@@ -1,3 +1,4 @@
+// Uncomment the following line to use the Speculos transport
 //const SpeculosTransport = require("@ledgerhq/hw-transport-node-speculos").default;
 const TransportNodeHid = require("@ledgerhq/hw-transport-node-hid").default;
 
@@ -8,7 +9,8 @@ const { shortString } = require("starknet");
 const apduPort = 9999;
 
 async function main() {
-  //   const transport = await SpeculosTransport.open({ apduPort });
+  // Uncomment the following line to use the Speculos transport
+  //const transport = await SpeculosTransport.open({ apduPort });
   const transport = await TransportNodeHid.create();
 
   const stark = new StarknetClient(transport);
