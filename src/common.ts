@@ -1,7 +1,6 @@
-import Transport from "@ledgerhq/hw-transport";
 import { ResponseBase } from "./types";
 
-export const CLA = 0x5A;
+export const CLA = 0x5a;
 export const INS = {
   GET_VERSION: 0x00,
   GET_PUB_KEY: 0x01,
@@ -63,12 +62,7 @@ export function errorCodeToString(statusCode: LedgerError) {
 }
 
 function isDict(v: any) {
-  return (
-    typeof v === "object" &&
-    v !== null &&
-    !(v instanceof Array) &&
-    !(v instanceof Date)
-  );
+  return typeof v === "object" && v !== null && !(v instanceof Array) && !(v instanceof Date);
 }
 
 export function processErrorResponse(response?: any): ResponseBase {

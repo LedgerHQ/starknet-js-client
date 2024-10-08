@@ -1,9 +1,10 @@
 const HARDENED = 0x80000000;
 
 export function serializePath(path: string): Uint8Array {
-  
   if (!path.startsWith("m/2645")) {
-    throw new Error("Path should start with 'm/2645' (e.g 'm/2645'/1195502025'/1148870696'/0'/0'/0')");
+    throw new Error(
+      "Path should start with 'm/2645' (e.g 'm/2645'/1195502025'/1148870696'/0'/0'/0')"
+    );
   }
 
   const pathArray = path.split("/");
@@ -23,9 +24,7 @@ export function serializePath(path: string): Uint8Array {
     const childNumber = Number(child);
 
     if (Number.isNaN(childNumber)) {
-      throw new Error(
-        `Invalid path : ${child} is not a number.`
-      );
+      throw new Error(`Invalid path : ${child} is not a number.`);
     }
 
     if (childNumber >= HARDENED) {

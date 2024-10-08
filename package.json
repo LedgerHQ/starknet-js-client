@@ -9,14 +9,15 @@
   ],
   "homepage": "https://github.com/LedgerHQ/starknet-js-client",
   "license": "Apache-2.0",
-  "main": "lib/stark.js",
-  "module": "lib/stark.js",
-  "types": "lib/stark.d.ts",
+  "type": "module",
+  "main": "./lib/cjs/index.cjs",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/types/index.d.ts",
   "exports": {
     ".": {
-      "import": "./lib/stark.js",
-      "require": "./lib/stark.js",
-      "types": "./lib/stark.d.ts"
+      "import": "./lib/esm/index.js",
+      "require": "./lib/cjs/index.cjs",
+      "types": "./lib/types/index.d.ts"
     }
   },
   "files": [
@@ -30,7 +31,7 @@
     "url": "git@github.com:LedgerHQ/starknet-js-client"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && vite build",
     "test": "jest",
     "doc": "documentation readme src/** --section=API --pe ts --re ts --re d.ts"
   },
@@ -53,10 +54,12 @@
     "@types/node": "^22.7.4",
     "babel-jest": "^28.1.0",
     "documentation": "^13.2.5",
-    "jest": "^28.1.0",
-    "prettier": "^2.6.2",
-    "ts-jest": "^28.0.3",
+    "jest": "^29.7.0",
+    "prettier": "^2.8.8",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.8.0",
-    "typescript": "^4.6.4"
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "vite-plugin-dts": "^4.2.3"
   }
 }
