@@ -16,8 +16,8 @@
  *  limitations under the License.
  ********************************************************************************/
 import Transport from "@ledgerhq/hw-transport";
-import { serializePath } from "./helper";
-import {
+import { serializePath, toBN } from "./helper";
+import type {
   ResponsePublicKey,
   ResponseHashSign,
   ResponseTxSign,
@@ -29,20 +29,9 @@ import {
 } from "./types";
 import { HASH_MAX_LENGTH, CLA, errorCodeToString, INS, LedgerError } from "./common";
 
-import {
-  BigNumberish,
-  Call,
-  CallData,
-  encode,
-  hash,
-  num,
-  shortString,
-  TypedData,
-  typedData,
-} from "starknet";
+import { type Call, CallData, hash, shortString, TypedData, typedData } from "starknet";
 
-import BN from "bn.js";
-import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
+import { EDataAvailabilityMode, type ResourceBounds } from "@starknet-io/types-js";
 
 export { LedgerError };
 export * from "./types";
@@ -241,11 +230,11 @@ export class StarknetClient {
       nonce (32 bytes) +
       data_availability_mode (32 bytes)
     */
-    const accountAddress = this.sanitizeHexBN(tx.accountAddress);
-    const tip = this.sanitizeHexBN(tx.tip);
-    const chain_id = this.sanitizeHexBN(tx.chainId);
-    const nonce = this.sanitizeHexBN(tx.nonce);
-    const data_availability_mode = this.sanitizeHexBN(
+    const accountAddress = toBN(tx.accountAddress);
+    const tip = toBN(tx.tip);
+    const chain_id = toBN(tx.chainId);
+    const nonce = toBN(tx.nonce);
+    const data_availability_mode = toBN(
       this.encodeDataAvailabilityMode(tx.nonceDataAvailabilityMode, tx.feeDataAvailabilityMode)
     );
     const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
@@ -296,7 +285,7 @@ export class StarknetClient {
     await this.sendApdu(INS.SIGN_TX, 3, 0, new Uint8Array(0));
 
     /* APDU 4 = Nb of calls */
-    let nb_calls = new BN(calls.length, 10);
+    let nb_calls = toBN(calls.length);
     data = new Uint8Array([...nb_calls.toArray("be", 32)]);
     await this.sendApdu(INS.SIGN_TX, 4, 0, data);
 
@@ -314,14 +303,14 @@ export class StarknetClient {
       const compiledCalldata = CallData.toCalldata(call.calldata);
       let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
-      const to = this.sanitizeHexBN(call.contractAddress);
+      const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(hash.getSelectorFromName(call.entrypoint));
+      const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = this.sanitizeHexBN(s);
+        let val = toBN(s);
         val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
@@ -384,10 +373,10 @@ export class StarknetClient {
       chain_id (32 bytes) +
       nonce (32 bytes) 
     */
-    const accountAddress = this.sanitizeHexBN(tx.accountAddress);
-    const max_fee = new BN(tx.max_fee as string, 10);
-    const chain_id = this.sanitizeHexBN(tx.chainId);
-    const nonce = new BN(tx.nonce as string, 10);
+    const accountAddress = toBN(tx.accountAddress);
+    const max_fee = toBN(tx.max_fee);
+    const chain_id = toBN(tx.chainId);
+    const nonce = toBN(tx.nonce);
 
     let data = new Uint8Array([
       ...accountAddress.toArray("be", 32),
@@ -398,7 +387,7 @@ export class StarknetClient {
     await this.sendApdu(INS.SIGN_TX_V1, 1, 0, data);
 
     /* APDU 2 = Nb of calls */
-    let nb_calls = new BN(calls.length, 10);
+    let nb_calls = toBN(calls.length);
     data = new Uint8Array([...nb_calls.toArray("be", 32)]);
     await this.sendApdu(INS.SIGN_TX_V1, 2, 0, data);
 
@@ -418,14 +407,14 @@ export class StarknetClient {
 
       let data = new Uint8Array((2 + compiledCalldata.length) * 32);
 
-      const to = this.sanitizeHexBN(call.contractAddress);
+      const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
 
-      const selector = this.sanitizeHexBN(hash.getSelectorFromName(call.entrypoint));
+      const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
       compiledCalldata.forEach((s, idx) => {
-        let val = this.sanitizeHexBN(s);
+        let val = toBN(s);
         val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
       });
 
@@ -484,11 +473,6 @@ export class StarknetClient {
     return this.signHash(path, hashed_data);
   }
 
-  private sanitizeHexBN(v: BigNumberish): BN {
-    const hexified = typeof v === "string" && num.isHex(v) ? v : num.toHex(v);
-    return new BN(encode.removeHexPrefix(hexified), 16);
-  }
-
   private encodeResourceBounds(bounds: ResourceBounds) {
     const MAX_AMOUNT_BITS = BigInt(64);
     const MAX_PRICE_PER_UNIT_BITS = BigInt(128);
@@ -507,8 +491,8 @@ export class StarknetClient {
       BigInt(bounds.l2_gas.max_price_per_unit);
 
     return {
-      l1_gas: this.sanitizeHexBN(L1Bound),
-      l2_gas: this.sanitizeHexBN(L2Bound),
+      l1_gas: toBN(L1Bound),
+      l2_gas: toBN(L2Bound),
     };
   }
 

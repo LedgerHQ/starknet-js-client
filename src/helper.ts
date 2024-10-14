@@ -1,3 +1,6 @@
+import BN from "bn.js";
+import { encode, type BigNumberish } from "starknet";
+
 const HARDENED = 0x80000000;
 
 export function serializePath(path: string): Uint8Array {
@@ -41,4 +44,19 @@ export function serializePath(path: string): Uint8Array {
 
 export function isHex(hex: string): boolean {
   return /^0x[0-9a-f]*$/i.test(hex);
+}
+
+export function toBN(v: BigNumberish): BN {
+  if (typeof v === "bigint" || typeof v === "number") {
+    return new BN(v.toString());
+  } else if (typeof v === "string") {
+    v = v.toLowerCase();
+    if (isHex(v)) {
+      return new BN(encode.removeHexPrefix(v), "hex");
+    } else {
+      return new BN(v);
+    }
+  } else {
+    throw new Error("Invalid input type for sanitizeHexBN");
+  }
 }
