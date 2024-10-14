@@ -1,5 +1,5 @@
 import { BigNumberish } from "starknet";
-import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
+import type { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export interface ResponseBase {
   errorMessage: string;
