@@ -31,9 +31,9 @@ import type {
 } from "./types";
 import { HASH_MAX_LENGTH, CLA, errorCodeToString, INS, LedgerError } from "./common";
 
-import { type Call, CallData, hash, shortString, TypedData, typedData } from "starknet";
+import { Call, CallData, hash, shortString, TypedData, typedData } from "starknet";
 
-import { EDataAvailabilityMode, type ResourceBounds } from "@starknet-io/types-js";
+import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export { LedgerError };
 export * from "./types";

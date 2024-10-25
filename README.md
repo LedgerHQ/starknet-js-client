@@ -30,8 +30,12 @@ Typescript host client used to interact with [Starknet Nano application](https:/
         *   [Parameters](#parameters-4)
     *   [signTxV1](#signtxv1)
         *   [Parameters](#parameters-5)
-    *   [signMessage](#signmessage)
+    *   [signDeployAccount](#signdeployaccount)
         *   [Parameters](#parameters-6)
+    *   [signDeployAccountV1](#signdeployaccountv1)
+        *   [Parameters](#parameters-7)
+    *   [signMessage](#signmessage)
+        *   [Parameters](#parameters-8)
 
 ### StarknetClient
 
@@ -120,6 +124,28 @@ sign a Starknet Tx v1 Invoke transaction
 *   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
 *   `calls` **[Array](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array)\<Call>** List of calls \[(to, selector, calldata), (), ...]
 *   `tx` **TxV1Fields** Tx fields (account address, max_fee, chainID, nonce)
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
+
+#### signDeployAccount
+
+sign a Starknet Tx v3 DeployAccount transaction
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `tx` **DeployAccountFields** Tx fields (contract_address, tip, resourceBounds, paymaster_data, chain_id, nonce, nonceDataAvailabilityMode, feeDataAvailabilityMode, constructor_calldata, class_hash, contract_address_salt)
+
+Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
+
+#### signDeployAccountV1
+
+sign a Starknet Tx v1 DeployAccount transaction
+
+##### Parameters
+
+*   `path` **[string](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String)** Derivation path in EIP-2645 format
+*   `tx` **DeployAccountV1Fields** Tx fields (contract_address, class_hash, contract_address_salt, constructor_calldata, max_fee, chainID, nonce)
 
 Returns **[Promise](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise)\<ResponseTxSign>** an object with Tx hash + (r, s, v) signature
 
