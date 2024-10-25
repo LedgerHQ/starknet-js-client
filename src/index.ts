@@ -25,13 +25,15 @@ import type {
   ResponseGeneric,
   TxFields,
   TxV1Fields,
+  DeployAccountFields,
+  DeployAccountV1Fields,
   ResponseStarkKey,
 } from "./types";
 import { HASH_MAX_LENGTH, CLA, errorCodeToString, INS, LedgerError } from "./common";
 
-import { type Call, CallData, hash, shortString, TypedData, typedData } from "starknet";
+import { Call, CallData, hash, shortString, TypedData, typedData } from "starknet";
 
-import { EDataAvailabilityMode, type ResourceBounds } from "@starknet-io/types-js";
+import { EDataAvailabilityMode, ResourceBounds } from "@starknet-io/types-js";
 
 export { LedgerError };
 export * from "./types";
@@ -443,6 +445,204 @@ export class StarknetClient {
       }
 
       response = await this.sendApdu(INS.SIGN_TX_V1, 3, 2, new Uint8Array(0));
+      if (response.returnCode !== LedgerError.NoError) {
+        return error;
+      }
+    }
+
+    if (response?.returnCode === LedgerError.NoError) {
+      return {
+        returnCode: response.returnCode,
+        errorMessage: response.errorMessage,
+        h: response.data.subarray(0, 32),
+        r: response.data.subarray(1 + 32, 1 + 32 + 32),
+        s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
+        v: response.data[97],
+      };
+    } else return error;
+  }
+
+  /**
+   * sign a Starknet Tx v3 DeployAccount transaction
+   * @param path Derivation path in EIP-2645 format
+   * @param tx Tx fields (contract_address, tip, resourceBounds, paymaster_data, chain_id, nonce, nonceDataAvailabilityMode, feeDataAvailabilityMode, constructor_calldata, class_hash, contract_address_salt)
+   * @return an object with Tx hash + (r, s, v) signature
+   */
+  async signDeployAccount(path: string, tx: DeployAccountFields): Promise<ResponseTxSign> {
+    /* APDU 0 is derivation path */
+    await this.sendApdu(INS.DEPLOY_ACCOUNT, 0, 0, serializePath(path));
+
+    /* APDU 1 =
+      contract_address (32 bytes) +
+      chain_id (32 bytes) +
+      nonce (32 bytes) +
+      data_availability_mode (32 bytes) +
+      class_hash (32 bytes) +
+      contract_address_salt (32 bytes)
+    */
+    const contractAddress = toBN(tx.contractAddress);
+    const chain_id = toBN(tx.chainId);
+    const nonce = toBN(tx.nonce);
+    const data_availability_mode = toBN(
+      this.encodeDataAvailabilityMode(tx.nonceDataAvailabilityMode, tx.feeDataAvailabilityMode)
+    );
+    const class_hash = toBN(tx.class_hash);
+    const contract_address_salt = toBN(tx.contract_address_salt);
+
+    let data = new Uint8Array([
+      ...contractAddress.toArray("be", 32),
+      ...chain_id.toArray("be", 32),
+      ...nonce.toArray("be", 32),
+      ...data_availability_mode.toArray("be", 32),
+      ...class_hash.toArray("be", 32),
+      ...contract_address_salt.toArray("be", 32),
+    ]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT, 1, 0, data);
+
+    /* APDU 2 = fees */
+    const tip = toBN(tx.tip);
+    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
+
+    data = new Uint8Array([
+      ...tip.toArray("be", 32),
+      ...l1_gas.toArray("be", 32),
+      ...l2_gas.toArray("be", 32),
+    ]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT, 2, 0, data);
+
+    /* APDU 3 = paymaster data (*/
+
+    /* slice data into chunks of 7 BigNumberish */
+    /*let datas = [];
+     for (let i = 0; i < tx.paymaster_data.length; i += 7) {
+      datas.push(tx.paymaster_data.slice(i, i + 7));
+    }
+    for (const data of datas) {
+      let paymaster_data = new Uint8Array(7 * 32);
+      data.forEach((d, idx) => {
+        let val = new BN(d as string, 10);
+        val.toArray("be", 32).forEach((byte, pos) => (paymaster_data[32 * idx + pos] = byte));
+      });
+      await this.sendApdu(INS.SIGN_TX, 2, 0, paymaster_data);
+    }*/
+    await this.sendApdu(INS.DEPLOY_ACCOUNT, 3, 0, new Uint8Array(0));
+
+    /* APDU 4 = constructor_calldata length */
+    let nb_calls = toBN(tx.constructor_calldata.length);
+    data = new Uint8Array([...nb_calls.toArray("be", 32)]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT, 4, 0, data);
+
+    /* APDUs constructor_calldata */
+    let response;
+    let error: ResponseTxSign = {
+      returnCode: LedgerError.ExecutionError,
+      errorMessage: "Execution Error",
+      h: new Uint8Array(0),
+      r: new Uint8Array(0),
+      s: new Uint8Array(0),
+      v: 0,
+    };
+
+    let calldata = new Uint8Array(tx.constructor_calldata.length * 32);
+    tx.constructor_calldata.forEach((d, idx) => {
+      let val = toBN(d);
+      val.toArray("be", 32).forEach((byte, pos) => (calldata[32 * idx + pos] = byte));
+    });
+
+     /* slice data into chunks of 7 * 32 bytes */
+    let calldatas = [];
+    for (let i = 0; i < calldata.length; i += 7 * 32) {
+      calldatas.push(calldata.slice(i, i + 7 * 32));
+    }
+
+    for (const data of calldatas) {
+      response = await this.sendApdu(INS.DEPLOY_ACCOUNT, 5, 0, data);
+      if (response.returnCode !== LedgerError.NoError) {
+        return error;
+      }
+    }
+
+    if (response?.returnCode === LedgerError.NoError) {
+      return {
+        returnCode: response.returnCode,
+        errorMessage: response.errorMessage,
+        h: response.data.subarray(0, 32),
+        r: response.data.subarray(1 + 32, 1 + 32 + 32),
+        s: response.data.subarray(1 + 32 + 32, 1 + 32 + 32 + 32),
+        v: response.data[97],
+      };
+    } else return error;
+  }
+
+  /**
+   * sign a Starknet Tx v1 DeployAccount transaction
+   * @param path Derivation path in EIP-2645 format
+   * @param tx Tx fields (contract_address, class_hash, contract_address_salt, constructor_calldata, max_fee, chainID, nonce)
+   * @return an object with Tx hash + (r, s, v) signature
+   */
+  async signDeployAccountV1(path: string, tx: DeployAccountV1Fields): Promise<ResponseTxSign> {
+    /* APDU 0 is derivation path */
+    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 0, 0, serializePath(path));
+
+    /* APDU 1 =
+      contract_address (32 bytes) +
+      class_hash (32 bytes) +
+      contract_address_salt (32 bytes) +
+      chain_id (32 bytes) +
+      nonce (32 bytes) +
+    */
+    const contractAddress = toBN(tx.contractAddress);
+    const class_hash = toBN(tx.class_hash);
+    const contract_address_salt = toBN(tx.contract_address_salt);
+    const chain_id = toBN(tx.chainId);
+    const nonce = toBN(tx.nonce);
+
+    let data = new Uint8Array([
+      ...contractAddress.toArray("be", 32),
+      ...class_hash.toArray("be", 32),
+      ...contract_address_salt.toArray("be", 32),
+      ...chain_id.toArray("be", 32),
+      ...nonce.toArray("be", 32),
+    ]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 1, 0, data);
+
+    /* APDU 2 = fees */
+    const max_fee = toBN(tx.max_fee);
+    data = new Uint8Array([
+      ...max_fee.toArray("be", 32),
+    ]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 2, 0, data);
+
+    /* APDU 3 = constructor_calldata length */
+    let nb_calls = toBN(tx.constructor_calldata.length);
+    data = new Uint8Array([...nb_calls.toArray("be", 32)]);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 3, 0, data);
+
+    /* APDUs constructor_calldata */
+    let response;
+    let error: ResponseTxSign = {
+      returnCode: LedgerError.ExecutionError,
+      errorMessage: "Execution Error",
+      h: new Uint8Array(0),
+      r: new Uint8Array(0),
+      s: new Uint8Array(0),
+      v: 0,
+    };
+
+    let calldata = new Uint8Array(tx.constructor_calldata.length * 32);
+    tx.constructor_calldata.forEach((d, idx) => {
+      let val = toBN(d);
+      val.toArray("be", 32).forEach((byte, pos) => (calldata[32 * idx + pos] = byte));
+    });
+
+     /* slice data into chunks of 7 * 32 bytes */
+    let calldatas = [];
+    for (let i = 0; i < calldata.length; i += 7 * 32) {
+      calldatas.push(calldata.slice(i, i + 7 * 32));
+    }
+
+    for (const data of calldatas) {
+      response = await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 4, 0, data);
       if (response.returnCode !== LedgerError.NoError) {
         return error;
       }

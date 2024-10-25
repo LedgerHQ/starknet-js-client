@@ -1,5 +1,5 @@
 import BN from "bn.js";
-import { encode, type BigNumberish } from "starknet";
+import { encode, BigNumberish } from "starknet";
 
 const HARDENED = 0x80000000;
 

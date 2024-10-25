@@ -59,6 +59,30 @@ export type TxV1Fields = {
   nonce: BigNumberish;
 };
 
+export type DeployAccountFields = {
+  contractAddress: string;
+  tip: BigNumberish;
+  resourceBounds: ResourceBounds;
+  paymaster_data: BigNumberish[];
+  chainId: string;
+  nonce: BigNumberish;
+  nonceDataAvailabilityMode: EDataAvailabilityMode;
+  feeDataAvailabilityMode: EDataAvailabilityMode;
+  constructor_calldata: BigNumberish[];
+  class_hash: string;
+  contract_address_salt: string;
+}
+
+export type DeployAccountV1Fields = {
+  contractAddress: string;
+  max_fee: BigNumberish;
+  chainId: string;
+  nonce: BigNumberish;
+  constructor_calldata: BigNumberish[];
+  class_hash: string;
+  contract_address_salt: string;
+}
+
 export type AbiEntry = { name: string; type: "felt" | "felt*" | string };
 
 export type FunctionAbi = {

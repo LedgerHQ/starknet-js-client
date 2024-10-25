@@ -7,6 +7,8 @@ export const INS = {
   SIGN_HASH: 0x02,
   SIGN_TX: 0x03,
   SIGN_TX_V1: 0x04,
+  DEPLOY_ACCOUNT: 0x05,
+  DEPLOY_ACCOUNT_V1: 0x06,
 };
 
 export const CHUNK_SIZE = 250;
