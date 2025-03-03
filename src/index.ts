@@ -311,9 +311,12 @@ export class StarknetClient {
       const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
+      const calldata_length = toBN(compiledCalldata.length);
+      calldata_length.toArray("be", 32).forEach((byte, pos) => (data[64 + pos] = byte));
+
       compiledCalldata.forEach((s, idx) => {
         let val = toBN(s);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[96 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -415,9 +418,12 @@ export class StarknetClient {
       const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
+      const calldata_length = toBN(compiledCalldata.length);
+      calldata_length.toArray("be", 32).forEach((byte, pos) => (data[64 + pos] = byte));
+
       compiledCalldata.forEach((s, idx) => {
         let val = toBN(s);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[96 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
