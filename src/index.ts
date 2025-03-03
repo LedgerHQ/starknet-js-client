@@ -303,7 +303,7 @@ export class StarknetClient {
     };
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
-      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
+      let data = new Uint8Array((3 + compiledCalldata.length) * 32);
 
       const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
@@ -410,7 +410,7 @@ export class StarknetClient {
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
 
-      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
+      let data = new Uint8Array((3 + compiledCalldata.length) * 32);
 
       const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
