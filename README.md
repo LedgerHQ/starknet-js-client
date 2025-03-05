@@ -1,6 +1,6 @@
 # STARKNET JS CLIENT
 
-Typescript host client used to interact with [Starknet Nano application](https://github.com/LedgerHQ/nano-rapp-starknet)
+Typescript host client used to interact with [Ledger Starknet application](https://github.com/LedgerHQ/app-starknet)
 
 ## Usage
 
