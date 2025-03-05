@@ -303,7 +303,7 @@ export class StarknetClient {
     };
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
-      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
+      let data = new Uint8Array((3 + compiledCalldata.length) * 32);
 
       const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
@@ -311,9 +311,12 @@ export class StarknetClient {
       const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
+      const calldataLength = toBN(compiledCalldata.length);
+      calldataLength.toArray("be", 32).forEach((byte, pos) => (data[64 + pos] = byte));
+
       compiledCalldata.forEach((s, idx) => {
         let val = toBN(s);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[96 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
@@ -407,7 +410,7 @@ export class StarknetClient {
     for (const call of calls) {
       const compiledCalldata = CallData.toCalldata(call.calldata);
 
-      let data = new Uint8Array((2 + compiledCalldata.length) * 32);
+      let data = new Uint8Array((3 + compiledCalldata.length) * 32);
 
       const to = toBN(call.contractAddress);
       to.toArray("be", 32).forEach((byte, pos) => (data[pos] = byte));
@@ -415,9 +418,12 @@ export class StarknetClient {
       const selector = toBN(hash.getSelectorFromName(call.entrypoint));
       selector.toArray("be", 32).forEach((byte, pos) => (data[32 + pos] = byte));
 
+      const calldataLength = toBN(compiledCalldata.length);
+      calldataLength.toArray("be", 32).forEach((byte, pos) => (data[64 + pos] = byte));
+
       compiledCalldata.forEach((s, idx) => {
         let val = toBN(s);
-        val.toArray("be", 32).forEach((byte, pos) => (data[64 + 32 * idx + pos] = byte));
+        val.toArray("be", 32).forEach((byte, pos) => (data[96 + 32 * idx + pos] = byte));
       });
 
       /* slice data into chunks of 7 * 32 bytes */
