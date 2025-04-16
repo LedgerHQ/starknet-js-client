@@ -247,12 +247,11 @@ export class StarknetClient {
     /* APDU 2 = fees */
 
     const tip = toBN(tx.tip);
-    const { l1_gas, l2_gas, l1_data_gas } = this.encodeResourceBounds(tx.resourceBounds);
+    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
     data = new Uint8Array([
       ...tip.toArray("be", 32),
       ...l1_gas.toArray("be", 32),
       ...l2_gas.toArray("be", 32),
-      ...l1_data_gas.toArray("be", 32),
     ]);
     await this.sendApdu(INS.SIGN_TX, 2, 0, data);
 
@@ -501,13 +500,12 @@ export class StarknetClient {
 
     /* APDU 2 = fees */
     const tip = toBN(tx.tip);
-    const { l1_gas, l2_gas, l1_data_gas } = this.encodeResourceBounds(tx.resourceBounds);
+    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
 
     data = new Uint8Array([
       ...tip.toArray("be", 32),
       ...l1_gas.toArray("be", 32),
       ...l2_gas.toArray("be", 32),
-      ...l1_data_gas.toArray("be", 32),
     ]);
     await this.sendApdu(INS.DEPLOY_ACCOUNT, 2, 0, data);
 
@@ -675,7 +673,6 @@ export class StarknetClient {
     const RESOURCE_VALUE_OFFSET = MAX_AMOUNT_BITS + MAX_PRICE_PER_UNIT_BITS;
     const L1_GAS_NAME = BigInt(shortString.encodeShortString("L1_GAS"));
     const L2_GAS_NAME = BigInt(shortString.encodeShortString("L2_GAS"));
-    const L1_DATA_GAS_NAME = BigInt(shortString.encodeShortString("L1_DATA"));
 
     const L1Bound =
       (L1_GAS_NAME << RESOURCE_VALUE_OFFSET) +
@@ -686,16 +683,10 @@ export class StarknetClient {
       (L2_GAS_NAME << RESOURCE_VALUE_OFFSET) +
       (BigInt(bounds.l2_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
       BigInt(bounds.l2_gas.max_price_per_unit);
-
-    const L1DataBound =
-      (L1_DATA_GAS_NAME << RESOURCE_VALUE_OFFSET) +
-      (BigInt(bounds.l1_data_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
-      BigInt(bounds.l1_data_gas.max_price_per_unit);
     
     return {
       l1_gas: toBN(L1Bound),
       l2_gas: toBN(L2Bound),
-      l1_data_gas: toBN(L1DataBound),
     };
     
   }
