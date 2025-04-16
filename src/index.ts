@@ -252,7 +252,7 @@ export class StarknetClient {
       ...tip.toArray("be", 32),
       ...l1_gas.toArray("be", 32),
       ...l2_gas.toArray("be", 32),
-      ...(l1_data_gas ? l1_data_gas.toArray("be", 32) : []),
+      ...l1_data_gas.toArray("be", 32),
     ]);
     await this.sendApdu(INS.SIGN_TX, 2, 0, data);
 
@@ -507,7 +507,7 @@ export class StarknetClient {
       ...tip.toArray("be", 32),
       ...l1_gas.toArray("be", 32),
       ...l2_gas.toArray("be", 32),
-      ...(l1_data_gas ? l1_data_gas.toArray("be", 32) : []),
+      ...l1_data_gas.toArray("be", 32),
     ]);
     await this.sendApdu(INS.DEPLOY_ACCOUNT, 2, 0, data);
 
@@ -677,8 +677,6 @@ export class StarknetClient {
     const L2_GAS_NAME = BigInt(shortString.encodeShortString("L2_GAS"));
     const L1_DATA_GAS_NAME = BigInt(shortString.encodeShortString("L1_DATA"));
 
-    let isRPC08_ResourceBounds = 'l1_data_gas' in bounds;
-
     const L1Bound =
       (L1_GAS_NAME << RESOURCE_VALUE_OFFSET) +
       (BigInt(bounds.l1_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
@@ -688,25 +686,18 @@ export class StarknetClient {
       (L2_GAS_NAME << RESOURCE_VALUE_OFFSET) +
       (BigInt(bounds.l2_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
       BigInt(bounds.l2_gas.max_price_per_unit);
- 
-    let L1DataBound;
-    if (isRPC08_ResourceBounds) {
-      L1DataBound = (L1_DATA_GAS_NAME << RESOURCE_VALUE_OFFSET) +
+
+    const L1DataBound =
+      (L1_DATA_GAS_NAME << RESOURCE_VALUE_OFFSET) +
       (BigInt(bounds.l1_data_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
       BigInt(bounds.l1_data_gas.max_price_per_unit);
-      return {
-        l1_gas: toBN(L1Bound),
-        l2_gas: toBN(L2Bound),
-        l1_data_gas: toBN(L1DataBound),
-      };
-    }
-    else {
-      return {
-        l1_gas: toBN(L1Bound),
-        l2_gas: toBN(L2Bound),
-        undefined
-      };
-    }
+    
+    return {
+      l1_gas: toBN(L1Bound),
+      l2_gas: toBN(L2Bound),
+      l1_data_gas: toBN(L1DataBound),
+    };
+    
   }
 
   private encodeDataAvailabilityMode(
