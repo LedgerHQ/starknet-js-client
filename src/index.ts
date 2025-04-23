@@ -225,34 +225,38 @@ export class StarknetClient {
 
     /* APDU 1 =
       accountAddress (32 bytes) +
-      tip (32 bytes) +
-      l1_gas_bounds (32 bytes) +
-      l2_gas_bounds (32 bytes) +
       chain_id (32 bytes) +
       nonce (32 bytes) +
       data_availability_mode (32 bytes)
     */
     const accountAddress = toBN(tx.accountAddress);
-    const tip = toBN(tx.tip);
     const chain_id = toBN(tx.chainId);
     const nonce = toBN(tx.nonce);
     const data_availability_mode = toBN(
       this.encodeDataAvailabilityMode(tx.nonceDataAvailabilityMode, tx.feeDataAvailabilityMode)
     );
-    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
-
+    
     let data = new Uint8Array([
       ...accountAddress.toArray("be", 32),
-      ...tip.toArray("be", 32),
-      ...l1_gas.toArray("be", 32),
-      ...l2_gas.toArray("be", 32),
       ...chain_id.toArray("be", 32),
       ...nonce.toArray("be", 32),
       ...data_availability_mode.toArray("be", 32),
     ]);
     await this.sendApdu(INS.SIGN_TX, 1, 0, data);
 
-    /* APDU 2 = paymaster data (*/
+    /* APDU 2 = fees */
+
+    const tip = toBN(tx.tip);
+    const { l1_gas, l2_gas, l1_data_gas } = this.encodeResourceBounds(tx.resourceBounds);
+    data = new Uint8Array([
+      ...tip.toArray("be", 32),
+      ...l1_gas.toArray("be", 32),
+      ...l2_gas.toArray("be", 32),
+      ...l1_data_gas.toArray("be", 32),
+    ]);
+    await this.sendApdu(INS.SIGN_TX, 2, 0, data);
+
+    /* APDU 3 = paymaster data (*/
 
     /* slice data into chunks of 7 BigNumberish */
     /*let datas = [];
@@ -268,9 +272,9 @@ export class StarknetClient {
       await this.sendApdu(INS.SIGN_TX, 2, 0, paymaster_data);
     }*/
 
-    await this.sendApdu(INS.SIGN_TX, 2, 0, new Uint8Array(0));
+    await this.sendApdu(INS.SIGN_TX, 3, 0, new Uint8Array(0));
 
-    /* APDU 3 = account deployment data */
+    /* APDU 4 = account deployment data */
     /*let datas = [];
      for (let i = 0; i < tx.account_deployment_data.length; i += 7) {
       datas.push(tx.account_deployment_data.slice(i, i + 7));
@@ -284,12 +288,12 @@ export class StarknetClient {
       await this.sendApdu(INS.SIGN_TX, 3, 0, account_deployment_data);
     }*/
 
-    await this.sendApdu(INS.SIGN_TX, 3, 0, new Uint8Array(0));
+    await this.sendApdu(INS.SIGN_TX, 4, 0, new Uint8Array(0));
 
-    /* APDU 4 = Nb of calls */
+    /* APDU 5 = Nb of calls */
     let nb_calls = toBN(calls.length);
     data = new Uint8Array([...nb_calls.toArray("be", 32)]);
-    await this.sendApdu(INS.SIGN_TX, 4, 0, data);
+    await this.sendApdu(INS.SIGN_TX, 5, 0, data);
 
     /* APDU Calls */
     let response;
@@ -326,26 +330,21 @@ export class StarknetClient {
       }
 
       if (calldatas.length > 1) {
-        response = await this.sendApdu(INS.SIGN_TX, 5, 0, calldatas[0]);
+        response = await this.sendApdu(INS.SIGN_TX, 6, 0, calldatas[0]);
         if (response.returnCode !== LedgerError.NoError) {
           return error;
         }
         for (const calldata of calldatas.slice(1)) {
-          response = await this.sendApdu(INS.SIGN_TX, 5, 1, calldata);
+          response = await this.sendApdu(INS.SIGN_TX, 6, 1, calldata);
           if (response.returnCode !== LedgerError.NoError) {
             return error;
           }
         }
       } else {
-        response = await this.sendApdu(INS.SIGN_TX, 5, 0, calldatas[0]);
+        response = await this.sendApdu(INS.SIGN_TX, 6, 0, calldatas[0]);
         if (response.returnCode !== LedgerError.NoError) {
           return error;
         }
-      }
-
-      response = await this.sendApdu(INS.SIGN_TX, 5, 2, new Uint8Array(0));
-      if (response.returnCode !== LedgerError.NoError) {
-        return error;
       }
     }
 
@@ -449,11 +448,6 @@ export class StarknetClient {
           return error;
         }
       }
-
-      response = await this.sendApdu(INS.SIGN_TX_V1, 3, 2, new Uint8Array(0));
-      if (response.returnCode !== LedgerError.NoError) {
-        return error;
-      }
     }
 
     if (response?.returnCode === LedgerError.NoError) {
@@ -507,12 +501,13 @@ export class StarknetClient {
 
     /* APDU 2 = fees */
     const tip = toBN(tx.tip);
-    const { l1_gas, l2_gas } = this.encodeResourceBounds(tx.resourceBounds);
+    const { l1_gas, l2_gas, l1_data_gas } = this.encodeResourceBounds(tx.resourceBounds);
 
     data = new Uint8Array([
       ...tip.toArray("be", 32),
       ...l1_gas.toArray("be", 32),
       ...l2_gas.toArray("be", 32),
+      ...l1_data_gas.toArray("be", 32),
     ]);
     await this.sendApdu(INS.DEPLOY_ACCOUNT, 2, 0, data);
 
@@ -600,6 +595,7 @@ export class StarknetClient {
     const contractAddress = toBN(tx.contractAddress);
     const class_hash = toBN(tx.class_hash);
     const contract_address_salt = toBN(tx.contract_address_salt);
+    const max_fee = toBN(tx.max_fee);
     const chain_id = toBN(tx.chainId);
     const nonce = toBN(tx.nonce);
 
@@ -607,22 +603,16 @@ export class StarknetClient {
       ...contractAddress.toArray("be", 32),
       ...class_hash.toArray("be", 32),
       ...contract_address_salt.toArray("be", 32),
+      ...max_fee.toArray("be", 32),
       ...chain_id.toArray("be", 32),
       ...nonce.toArray("be", 32),
     ]);
     await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 1, 0, data);
 
-    /* APDU 2 = fees */
-    const max_fee = toBN(tx.max_fee);
-    data = new Uint8Array([
-      ...max_fee.toArray("be", 32),
-    ]);
-    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 2, 0, data);
-
-    /* APDU 3 = constructor_calldata length */
+    /* APDU 2 = constructor_calldata length */
     let nb_calls = toBN(tx.constructor_calldata.length);
     data = new Uint8Array([...nb_calls.toArray("be", 32)]);
-    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 3, 0, data);
+    await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 2, 0, data);
 
     /* APDUs constructor_calldata */
     let response;
@@ -648,7 +638,7 @@ export class StarknetClient {
     }
 
     for (const data of calldatas) {
-      response = await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 4, 0, data);
+      response = await this.sendApdu(INS.DEPLOY_ACCOUNT_V1, 3, 0, data);
       if (response.returnCode !== LedgerError.NoError) {
         return error;
       }
@@ -685,6 +675,7 @@ export class StarknetClient {
     const RESOURCE_VALUE_OFFSET = MAX_AMOUNT_BITS + MAX_PRICE_PER_UNIT_BITS;
     const L1_GAS_NAME = BigInt(shortString.encodeShortString("L1_GAS"));
     const L2_GAS_NAME = BigInt(shortString.encodeShortString("L2_GAS"));
+    const L1_DATA_GAS_NAME = BigInt(shortString.encodeShortString("L1_DATA"));
 
     const L1Bound =
       (L1_GAS_NAME << RESOURCE_VALUE_OFFSET) +
@@ -696,10 +687,17 @@ export class StarknetClient {
       (BigInt(bounds.l2_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
       BigInt(bounds.l2_gas.max_price_per_unit);
 
+    const L1DataBound =
+      (L1_DATA_GAS_NAME << RESOURCE_VALUE_OFFSET) +
+      (BigInt(bounds.l1_data_gas.max_amount) << MAX_PRICE_PER_UNIT_BITS) +
+      BigInt(bounds.l1_data_gas.max_price_per_unit);
+    
     return {
       l1_gas: toBN(L1Bound),
       l2_gas: toBN(L2Bound),
+      l1_data_gas: toBN(L1DataBound),
     };
+    
   }
 
   private encodeDataAvailabilityMode(

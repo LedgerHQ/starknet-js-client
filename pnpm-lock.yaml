@@ -18,8 +18,8 @@ importers:
         specifier: ^5.2.1
         version: 5.2.1
       starknet:
-        specifier: ^6.11.0
-        version: 6.11.0
+        specifier: ^6.24.1
+        version: 6.24.1
     devDependencies:
       '@babel/core':
         specifier: ^7.18.0
@@ -34,8 +34,8 @@ importers:
         specifier: ^6.29.4
         version: 6.29.4
       '@starknet-io/types-js':
-        specifier: ^0.7.7
-        version: 0.7.7
+        specifier: ^0.8.1
+        version: 0.8.1
       '@types/jest':
         specifier: ^27.5.1
         version: 27.5.2
@@ -973,22 +973,12 @@ packages:
   '@microsoft/tsdoc@0.15.0':
     resolution: {integrity: sha512-HZpPoABogPvjeJOdzCOSJsXeL/SMCBgBZMVC3X3d7YYp2gf31MfxhUoYUNwf1ERPJOnQc0wkFn9trqI6ZEdZuA==}
 
-  '@noble/curves@1.3.0':
-    resolution: {integrity: sha512-t01iSXPuN+Eqzb4eBX0S5oubSqXbK/xXa1Ne18Hj8f9pStxztHCE2gfboSp/dZRLSqfuLpRK2nDXDK+W9puocA==}
+  '@noble/curves@1.7.0':
+    resolution: {integrity: sha512-UTMhXK9SeDhFJVrHeUJ5uZlI6ajXg10O6Ddocf9S6GjbSBVZsJo88HzKwXznNfGpMTRDyJkqMjNDPYgf0qFWnw==}
+    engines: {node: ^14.21.3 || >=16}
 
-  '@noble/curves@1.4.2':
-    resolution: {integrity: sha512-TavHr8qycMChk8UwMld0ZDRvatedkzWfH8IiaeGCfymOP5i0hSCozz9vHOL0nkwk7HRMlFnAiKpS2jrUmSybcw==}
-
-  '@noble/hashes@1.3.3':
-    resolution: {integrity: sha512-V7/fPHgl+jsVPXqqeOzT8egNj2iBIVt+ECeMMG8TdcnTikP3oaBtUVqpT/gYCR68aEBJSF+XbYUxStjbFMqIIA==}
-    engines: {node: '>= 16'}
-
-  '@noble/hashes@1.4.0':
-    resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
-    engines: {node: '>= 16'}
-
-  '@noble/hashes@1.5.0':
-    resolution: {integrity: sha512-1j6kQFb7QRru7eKN3ZDvRcP13rugwdxZqCjbiAVZfIJwgj2A65UmT4TgARXGlXgnRkORLTDTrO19ZErt7+QXgA==}
+  '@noble/hashes@1.6.0':
+    resolution: {integrity: sha512-YUULf0Uk4/mAA89w+k3+yUYh6NrEvxZa5T6SY3wlMvE2chHkxFUUIDI8/XW1QSC357iA5pSnqt7XEhvFOqmDyQ==}
     engines: {node: ^14.21.3 || >=16}
 
   '@rollup/pluginutils@5.1.2':
@@ -1102,11 +1092,11 @@ packages:
   '@rushstack/ts-command-line@4.22.6':
     resolution: {integrity: sha512-QSRqHT/IfoC5nk9zn6+fgyqOPXHME0BfchII9EUPR19pocsNp/xSbeBCbD3PIR2Lg+Q5qk7OFqk1VhWPMdKHJg==}
 
-  '@scure/base@1.1.9':
-    resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
+  '@scure/base@1.2.1':
+    resolution: {integrity: sha512-DGmGtC8Tt63J5GfHgfl5CuAXh96VF/LD8K9Hr/Gv0J2lAoRGlPOMpqMpMbCTOoOJMZCk2Xt+DskdDyn6dEFdzQ==}
 
-  '@scure/starknet@1.0.0':
-    resolution: {integrity: sha512-o5J57zY0f+2IL/mq8+AYJJ4Xpc1fOtDhr+mFQKbHnYFmm3WQrC+8zj2HEgxak1a+x86mhmBC1Kq305KUpVf0wg==}
+  '@scure/starknet@1.1.0':
+    resolution: {integrity: sha512-83g3M6Ix2qRsPN4wqLDqiRZ2GBNbjVWfboJE/9UjfG+MHr6oDSu/CWgy8hsBSJejr09DkkL+l0Ze4KVrlCIdtQ==}
 
   '@sinclair/typebox@0.24.51':
     resolution: {integrity: sha512-1P1OROm/rdubP5aFDSZQILU0vrLCJ4fvHt6EoqHEM+2D/G5MK3bIaymUKLit8Js9gbns5UyJnkP/TZROLw4tUA==}
@@ -1120,8 +1110,11 @@ packages:
   '@sinonjs/fake-timers@10.3.0':
     resolution: {integrity: sha512-V4BG07kuYSUkTCSBHG8G8TNhM+F19jXFWnQtzj+we8DrkpSBCee9Z3Ms8yiGer/dlmhe35/Xdgyo3/0rQKg7YA==}
 
-  '@starknet-io/types-js@0.7.7':
-    resolution: {integrity: sha512-WLrpK7LIaIb8Ymxu6KF/6JkGW1sso988DweWu7p5QY/3y7waBIiPvzh27D9bX5KIJNRDyOoOVoHVEKYUYWZ/RQ==}
+  '@starknet-io/types-js@0.7.10':
+    resolution: {integrity: sha512-1VtCqX4AHWJlRRSYGSn+4X1mqolI1Tdq62IwzoU2vUuEE72S1OlEeGhpvd6XsdqXcfHmVzYfj8k1XtKBQqwo9w==}
+
+  '@starknet-io/types-js@0.8.1':
+    resolution: {integrity: sha512-c6P/qVa5YRhUMahsyyfIVW6rY2ptRylH3UXVWiB5ZHvmxzZP2lh58B9fdkPuZ3d5X3uiETEbzzrRsEGSGZI29Q==}
 
   '@tsconfig/node10@1.0.11':
     resolution: {integrity: sha512-DcRjDCujK/kCk/cUe8Xz8ZSpm8mS3mNNpta+jGCA6USEDfktlNvm1+IuZ9eTcDbNk41BHwpHHeW+N1lKCz4zOw==}
@@ -2089,9 +2082,6 @@ packages:
   get-port@5.1.1:
     resolution: {integrity: sha512-g/Q1aTSDOxFpchXC4i8ZWvxA1lnPqx/JHqcpIw0/LX9T8x/GBbi6YnlN5nhaKIFkT8oFsscUKgDJYxfwfS6QsQ==}
     engines: {node: '>=8'}
-
-  get-starknet-core@4.0.0:
-    resolution: {integrity: sha512-6pLmidQZkC3wZsrHY99grQHoGpuuXqkbSP65F8ov1/JsEI8DDLkhsAuLCKFzNOK56cJp+f1bWWfTJ57e9r5eqQ==}
 
   get-stream@6.0.1:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
@@ -3547,8 +3537,8 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
-  starknet@6.11.0:
-    resolution: {integrity: sha512-u50KrGDi9fbu1Ogu7ynwF/tSeFlp3mzOg1/Y5x50tYFICImo3OfY4lOz9OtYDk404HK4eUujKkhov9tG7GAKlg==}
+  starknet@6.24.1:
+    resolution: {integrity: sha512-g7tiCt73berhcNi41otlN3T3kxZnIvZhMi8WdC21Y6GC6zoQgbI2z1t7JAZF9c4xZiomlanwVnurcpyfEdyMpg==}
 
   static-extend@0.1.2:
     resolution: {integrity: sha512-72E9+uLc27Mt718pMHt9VMNiAL4LMsmDbBva8mxWUCkT07fSzEGMYUCk0XWY6lp0j6RBAG4cJ3mWuZv2OE3s0g==}
@@ -3888,9 +3878,6 @@ packages:
   urix@0.1.0:
     resolution: {integrity: sha512-Am1ousAhSLBeB9cG/7k7r2R0zj50uDRlZHPGbazid5s9rlF1F/QKYObEKSIunSjIOkJZqwRRLpvewjEkM7pSqg==}
     deprecated: Please see https://github.com/lydell/urix#deprecated
-
-  url-join@4.0.1:
-    resolution: {integrity: sha512-jk1+QP6ZJqyOiuEI9AEWQfju/nB2Pw466kbA0LEZljHwKeMgd9WrAEgEGxjPDD2+TNbbb37rTyhEfrCXfuKXnA==}
 
   url-parse@1.5.10:
     resolution: {integrity: sha512-WypcfiRhfeUP9vvF0j6rw0J3hrWrw6iZv3+22h6iRMJ/8z1Tj6XfLP4DsUix5MhMPnXpiHDoKyoZ/bdCkwBCiQ==}
@@ -5297,19 +5284,11 @@ snapshots:
 
   '@microsoft/tsdoc@0.15.0': {}
 
-  '@noble/curves@1.3.0':
+  '@noble/curves@1.7.0':
     dependencies:
-      '@noble/hashes': 1.3.3
+      '@noble/hashes': 1.6.0
 
-  '@noble/curves@1.4.2':
-    dependencies:
-      '@noble/hashes': 1.4.0
-
-  '@noble/hashes@1.3.3': {}
-
-  '@noble/hashes@1.4.0': {}
-
-  '@noble/hashes@1.5.0': {}
+  '@noble/hashes@1.6.0': {}
 
   '@rollup/pluginutils@5.1.2(rollup@4.24.0)':
     dependencies:
@@ -5401,12 +5380,12 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@scure/base@1.1.9': {}
+  '@scure/base@1.2.1': {}
 
-  '@scure/starknet@1.0.0':
+  '@scure/starknet@1.1.0':
     dependencies:
-      '@noble/curves': 1.3.0
-      '@noble/hashes': 1.3.3
+      '@noble/curves': 1.7.0
+      '@noble/hashes': 1.6.0
 
   '@sinclair/typebox@0.24.51': {}
 
@@ -5420,7 +5399,9 @@ snapshots:
     dependencies:
       '@sinonjs/commons': 3.0.1
 
-  '@starknet-io/types-js@0.7.7': {}
+  '@starknet-io/types-js@0.7.10': {}
+
+  '@starknet-io/types-js@0.8.1': {}
 
   '@tsconfig/node10@1.0.11': {}
 
@@ -6579,10 +6560,6 @@ snapshots:
       yargs: 16.2.0
 
   get-port@5.1.1: {}
-
-  get-starknet-core@4.0.0:
-    dependencies:
-      '@starknet-io/types-js': 0.7.7
 
   get-stream@6.0.1: {}
 
@@ -8385,21 +8362,19 @@ snapshots:
       stringify-package: 1.0.1
       yargs: 16.2.0
 
-  starknet@6.11.0:
+  starknet@6.24.1:
     dependencies:
-      '@noble/curves': 1.4.2
-      '@noble/hashes': 1.5.0
-      '@scure/base': 1.1.9
-      '@scure/starknet': 1.0.0
+      '@noble/curves': 1.7.0
+      '@noble/hashes': 1.6.0
+      '@scure/base': 1.2.1
+      '@scure/starknet': 1.1.0
       abi-wan-kanabi: 2.2.3
       fetch-cookie: 3.0.1
-      get-starknet-core: 4.0.0
       isomorphic-fetch: 3.0.0
       lossless-json: 4.0.2
       pako: 2.1.0
-      starknet-types-07: '@starknet-io/types-js@0.7.7'
+      starknet-types-07: '@starknet-io/types-js@0.7.10'
       ts-mixer: 6.0.4
-      url-join: 4.0.1
     transitivePeerDependencies:
       - encoding
 
@@ -8721,8 +8696,6 @@ snapshots:
       punycode: 2.3.1
 
   urix@0.1.0: {}
-
-  url-join@4.0.1: {}
 
   url-parse@1.5.10:
     dependencies:
