@@ -1,6 +1,6 @@
 {
   "name": "@ledgerhq/hw-app-starknet",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Ledger Hardware Wallet Starknet Application API",
   "keywords": [
     "Ledger",
@@ -41,8 +41,7 @@
   "dependencies": {
     "@ledgerhq/hw-transport": "^6.31.2",
     "@types/bn.js": "^5.1.1",
-    "bn.js": "^5.2.1",
-    "starknet": "^6.24.1"
+    "bn.js": "^5.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.18.0",
@@ -61,5 +60,8 @@
     "typescript": "^5.6.2",
     "vite": "^5.4.8",
     "vite-plugin-dts": "^4.2.3"
+  },
+  "peerDependencies": {
+    "starknet": "^7.0.0"
   }
 }
